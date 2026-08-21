@@ -1,0 +1,2415 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#221C2B">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>オープン戦 成績管理</title>
+<style>
+:root{
+  --paper:#EFEFF2;
+  --card:#FFFFFF;
+  --ink:#191521;
+  --ink-2:#4A4455;
+  --muted:#7B7486;
+  --line:#E3E1E8;
+  --line-2:#F0EFF3;
+  --accent:#6B3FA0;
+  --accent-deep:#3F2263;
+  --accent-soft:#F1EBF8;
+  --good:#1C7C55;
+  --good-soft:#E6F3ED;
+  --warn:#B4441E;
+  --warn-soft:#FBECE6;
+  --font-ui:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+  --font-num:ui-monospace,"SF Mono",Menlo,"Roboto Mono",monospace;
+  --shadow:0 1px 2px rgba(25,21,33,.06),0 8px 24px rgba(25,21,33,.06);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  font-family:var(--font-ui);
+  background:var(--paper);
+  color:var(--ink);
+  font-size:15px;line-height:1.55;
+  padding-bottom:calc(64px + env(safe-area-inset-bottom));
+  -webkit-font-smoothing:antialiased;
+}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:none;background:none}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+
+/* ---------- header ---------- */
+.top{
+  position:sticky;top:0;z-index:40;
+  background:var(--accent-deep);
+  color:#fff;
+  padding:calc(10px + env(safe-area-inset-top)) 16px 10px;
+  display:flex;align-items:baseline;gap:10px;
+}
+.top h1{font-size:15px;font-weight:600;margin:0;letter-spacing:.02em}
+.top .eyebrow{
+  font-family:var(--font-num);font-size:10px;letter-spacing:.12em;
+  color:#C6ADE4;margin-left:auto;white-space:nowrap;
+}
+.top .eyebrow.ok{color:#9FE3C0}
+.top .eyebrow.err{color:#FFB4A0}
+.viewbar{
+  background:var(--accent-soft);color:var(--accent-deep);border-radius:11px;
+  padding:10px 13px;margin-bottom:12px;font-size:12.5px;display:flex;align-items:center;gap:10px;
+}
+.viewbar b{font-weight:600}
+main{padding:14px 14px 28px;max-width:720px;margin:0 auto}
+
+/* ---------- generic ---------- */
+.card{background:var(--card);border-radius:14px;box-shadow:var(--shadow);margin-bottom:12px;overflow:hidden}
+.card-pad{padding:14px}
+.sec-label{
+  font-family:var(--font-num);font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--muted);margin:18px 2px 8px;display:flex;align-items:center;gap:8px;
+}
+.sec-label::after{content:"";flex:1;height:1px;background:var(--line)}
+.muted{color:var(--muted)}
+.small{font-size:12.5px}
+.row{display:flex;align-items:center;gap:10px}
+.spread{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.num{font-family:var(--font-num);font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+.btn{
+  background:var(--accent);color:#fff;border-radius:10px;padding:11px 16px;
+  font-weight:600;font-size:14px;display:inline-flex;align-items:center;justify-content:center;gap:6px;
+}
+.btn:active{transform:translateY(1px)}
+.btn.ghost{background:var(--accent-soft);color:var(--accent-deep)}
+.btn.line{background:#fff;border:1px solid var(--line);color:var(--ink-2)}
+.btn.danger{background:var(--warn-soft);color:var(--warn)}
+.btn.block{display:flex;width:100%}
+.btn:disabled{opacity:.45}
+.chip{
+  border:1px solid var(--line);background:#fff;border-radius:999px;
+  padding:7px 13px;font-size:13px;color:var(--ink-2);white-space:nowrap;
+}
+.chip.on{background:var(--accent-deep);border-color:var(--accent-deep);color:#fff;font-weight:600}
+.tgl{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:#fff;flex:0 0 auto}
+.tgl button{padding:7px 13px;font-size:12.5px;color:var(--muted);white-space:nowrap}
+.tgl button.on{background:var(--accent-deep);color:#fff;font-weight:600}
+.scroll-x{display:flex;gap:7px;overflow-x:auto;padding:2px 0 4px;-webkit-overflow-scrolling:touch}
+.scroll-x::-webkit-scrollbar{display:none}
+label.field{display:block;margin-bottom:12px}
+label.field > span{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
+input[type=text],input[type=date],input[type=number],select,textarea{
+  width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 12px;background:#fff;
+}
+textarea{min-height:110px;font-family:var(--font-num);font-size:12px}
+.empty{text-align:center;padding:34px 18px;color:var(--muted);font-size:13.5px}
+.empty strong{display:block;color:var(--ink);font-size:15px;margin-bottom:6px;font-weight:600}
+.badge{
+  font-family:var(--font-num);font-size:10px;letter-spacing:.08em;padding:3px 7px;border-radius:5px;
+  background:var(--line-2);color:var(--muted);
+}
+.badge.ok{background:var(--good-soft);color:var(--good)}
+.res{
+  display:inline-block;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:5px;
+  background:var(--line-2);color:var(--muted);letter-spacing:.04em;
+}
+.res.win{background:#E4F2E9;color:#14653C}
+.res.lose{background:#FBE7E2;color:#9C3A20}
+.res.draw{background:#EEECF2;color:#5A5266}
+.badge.tmA{background:var(--accent-deep);color:#fff;letter-spacing:.02em}
+.badge.tmB{background:#DCD8E4;color:var(--accent-deep);letter-spacing:.02em}
+
+/* ---------- signature: stat gauges ---------- */
+.statgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:var(--line-2)}
+.stat{background:#fff;padding:12px 10px 11px}
+.stat .k{font-family:var(--font-num);font-size:9.5px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase}
+.stat .v{font-family:var(--font-num);font-variant-numeric:tabular-nums;font-size:23px;line-height:1.15;letter-spacing:-.02em;margin-top:2px}
+.stat .v.good{color:var(--good)}
+.gauge{position:relative;height:3px;background:var(--line);margin-top:9px;border-radius:2px}
+.gauge i{position:absolute;top:-2.5px;width:1px;height:8px;background:var(--muted);opacity:.55}
+.gauge i.hi{background:var(--good);opacity:1}
+.gauge b{position:absolute;top:-3px;width:9px;height:9px;border-radius:50%;background:var(--accent);margin-left:-4.5px;border:2px solid #fff}
+.gauge-legend{display:flex;justify-content:space-between;font-family:var(--font-num);font-size:9px;color:var(--muted);margin-top:5px}
+
+/* ---------- risk bar ---------- */
+.rwrap{position:relative;padding:2px 0}
+.rbar{display:flex;height:14px;border-radius:4px;overflow:hidden;background:var(--line-2)}
+.rseg{display:block;height:100%}
+.r-out{background:#1F3A6E}.r-gb{background:#E1701A}.r-fb{background:#1E7A3C}.r-bb{background:#2E9BD6}.r-hr{background:#8E3FA8}
+.r60{position:absolute;left:60%;top:0;bottom:0;width:2px;background:var(--ink);opacity:.75}
+.r60::after{content:"60%";position:absolute;left:3px;top:-1px;font-family:var(--font-num);font-size:8.5px;color:var(--ink);opacity:.7}
+.rlegend{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:9px;font-size:11.5px;color:var(--ink-2)}
+.rlegend span{display:flex;align-items:center;gap:5px}
+.rlegend i{width:9px;height:9px;border-radius:2px;flex:0 0 9px}
+.rverdict{background:var(--line-2);border-radius:11px;padding:11px 13px;margin-top:11px;color:var(--ink-2)}
+.rverdict.ok{background:var(--good-soft);color:var(--good)}
+.rverdict > div:first-child{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.rverdict .k{font-size:12px}
+.rverdict b{font-size:22px;letter-spacing:-.02em}
+.rverdict .small{margin-top:2px;font-size:11.5px;opacity:.85}
+.rmini{display:flex;align-items:center;gap:8px;width:100%}
+.rmini .rwrap{flex:1}
+
+/* ---------- lists ---------- */
+.list-item{
+  display:flex;align-items:center;gap:12px;width:100%;text-align:left;
+  padding:13px 14px;border-bottom:1px solid var(--line-2);background:#fff;
+}
+.list-item:last-child{border-bottom:none}
+.list-item:active{background:var(--line-2)}
+.jersey{
+  flex:0 0 34px;height:34px;border-radius:9px;background:var(--accent-soft);color:var(--accent-deep);
+  display:flex;align-items:center;justify-content:center;font-family:var(--font-num);font-size:13px;font-weight:600;
+}
+.jersey.dim{background:var(--line-2);color:var(--muted)}
+.jersey.gr{font-size:11.5px;letter-spacing:-.02em}
+.jersey.fm{background:transparent;padding:0}
+.jersey.fm svg{display:block}
+.jersey.fm.none{background:var(--line-2);color:var(--muted);font-size:12px}
+.formline{display:flex;align-items:center;gap:10px;background:#fff;border-radius:12px;padding:12px 14px;margin-bottom:12px;box-shadow:var(--shadow)}
+.formline .e{line-height:0}
+.formline .fl-badge{display:none}
+.formline .t{font-weight:600;font-size:15px}
+.jersey.g4,.gchip.g4{background:#FBE9A8;color:#6B4E00}
+.jersey.g3,.gchip.g3{background:#CFE1FA;color:#134A86}
+.jersey.g2,.gchip.g2{background:#FAD4D0;color:#8E2418}
+.jersey.g1,.gchip.g1{background:#CFEBD8;color:#14653C}
+.jersey.dim.g4,.jersey.dim.g3,.jersey.dim.g2,.jersey.dim.g1{opacity:.45}
+.gchip{
+  display:inline-block;font-family:var(--font-num);font-size:10.5px;font-weight:600;
+  padding:2px 6px;border-radius:5px;background:var(--line-2);color:var(--muted);margin-right:2px;
+}
+th.sel{background:var(--accent-soft);color:var(--accent-deep)}
+td.sel{background:var(--accent-soft);font-weight:600}
+td.sel.hi{background:var(--good-soft)}
+.li-main{flex:1;min-width:0}
+.li-name{font-weight:600;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.li-sub{font-size:11.5px;color:var(--muted);margin-top:1px}
+.li-val{text-align:right;font-family:var(--font-num);font-variant-numeric:tabular-nums}
+.li-val .b{font-size:17px;letter-spacing:-.01em}
+.li-val .s{font-size:10.5px;color:var(--muted);letter-spacing:.06em}
+
+/* ---------- calendar ---------- */
+.cal-head{
+  display:grid;grid-template-columns:repeat(7,1fr);background:var(--accent-deep);color:#fff;
+  font-size:10.5px;text-align:center;padding:6px 0;letter-spacing:.04em;
+}
+.cal-head .sat{color:#AFC9F5}.cal-head .sun{color:#F5B8AF}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);background:var(--line-2);gap:1px;padding:1px}
+.cal-cell{background:#fff;min-height:56px;padding:3px 2px 4px}
+.cal-cell.empty-cell{background:#FAFAFC}
+.cal-d{font-family:var(--font-num);font-size:10px;color:var(--muted);display:block;text-align:center}
+.cal-d.sat{color:#2F6BC4}.cal-d.sun{color:#C0442A}
+.calg{
+  display:block;width:100%;text-align:center;border-radius:5px;padding:3px 1px;margin-top:2px;
+  background:var(--line-2);line-height:1.25;
+}
+.calg .op{display:block;font-size:9.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.calg .sc{display:block;font-family:var(--font-num);font-size:10px;font-weight:600}
+.calg .pl{display:block;font-family:var(--font-num);font-size:8.5px;color:var(--muted)}
+.calg .tm{font-style:normal;font-size:8px;padding:0 3px;border-radius:3px;background:rgba(0,0,0,.12);margin-right:2px}
+.calg.win{background:#E4F2E9;color:#14653C}
+.calg.lose{background:#FBE7E2;color:#9C3A20}
+.calg.draw{background:#EEECF2;color:#5A5266}
+.calg .sc.muted{color:var(--muted);font-weight:400}
+
+/* ---------- table ---------- */
+.tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch;background:#fff}
+table{border-collapse:collapse;font-family:var(--font-num);font-variant-numeric:tabular-nums;font-size:12px;white-space:nowrap}
+th,td{padding:8px 9px;border-bottom:1px solid var(--line-2);text-align:right}
+th{
+  font-size:10px;letter-spacing:.06em;color:var(--muted);font-weight:600;
+  position:sticky;top:0;background:#fff;border-bottom:1px solid var(--line);
+}
+th:first-child,td:first-child{
+  text-align:left;position:sticky;left:0;background:#fff;font-family:var(--font-ui);
+  font-size:12.5px;font-weight:600;box-shadow:1px 0 0 var(--line-2);
+}
+th:first-child{z-index:2}
+td.hi{color:var(--good);font-weight:600}
+
+/* ---------- sheet ---------- */
+.backdrop{position:fixed;inset:0;background:rgba(25,21,33,.42);z-index:60;display:none}
+.backdrop.open{display:block}
+.sheet{
+  position:fixed;left:0;right:0;bottom:0;z-index:61;background:var(--paper);
+  border-radius:18px 18px 0 0;max-height:92vh;display:none;flex-direction:column;
+  box-shadow:0 -8px 40px rgba(25,21,33,.2);
+}
+.sheet.open{display:flex}
+.sheet-head{
+  display:flex;align-items:center;gap:10px;padding:14px 16px 12px;border-bottom:1px solid var(--line);
+  background:#fff;border-radius:18px 18px 0 0;
+}
+.sheet-head h2{margin:0;font-size:15px;font-weight:600;flex:1}
+.sheet-body{overflow-y:auto;padding:14px;flex:1;-webkit-overflow-scrolling:touch}
+.sheet-foot{
+  padding:12px 14px calc(12px + env(safe-area-inset-bottom));background:#fff;border-top:1px solid var(--line);
+  display:flex;gap:10px;
+}
+.sheet-foot .btn{flex:1}
+.x{width:32px;height:32px;border-radius:8px;background:var(--line-2);color:var(--ink-2);font-size:17px;line-height:1}
+
+/* ---------- steppers ---------- */
+.fields{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+.f{background:#fff;border:1px solid var(--line);border-radius:11px;padding:8px 9px 9px}
+.f > span{display:block;font-size:11.5px;color:var(--muted);margin-bottom:5px}
+.stepper{display:flex;align-items:center;gap:6px}
+.stepper button{
+  width:32px;height:32px;flex:0 0 32px;border-radius:8px;background:var(--accent-soft);
+  color:var(--accent-deep);font-size:17px;font-weight:600;line-height:1;
+}
+.stepper input{
+  flex:1;min-width:0;text-align:center;padding:6px 2px;border:none;border-bottom:1px solid var(--line);
+  border-radius:0;font-family:var(--font-num);font-size:17px;font-variant-numeric:tabular-nums;
+}
+.stepper input::-webkit-outer-spin-button,.stepper input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.stepper input[type=number]{-moz-appearance:textfield}
+.seg{display:flex;gap:5px}
+.seg button{flex:1;border:1px solid var(--line);border-radius:8px;padding:7px 0;font-family:var(--font-num);font-size:14px;background:#fff;color:var(--ink-2)}
+.seg button.on{background:var(--accent-deep);border-color:var(--accent-deep);color:#fff;font-weight:600}
+.derived{
+  display:flex;flex-wrap:wrap;gap:14px;background:var(--accent-soft);border-radius:11px;padding:11px 13px;margin-bottom:12px;
+}
+.derived div{font-family:var(--font-num);font-size:12px;color:var(--accent-deep)}
+.derived div b{display:block;font-size:17px;font-weight:600;letter-spacing:-.01em}
+.err{background:var(--warn-soft);color:var(--warn);border-radius:10px;padding:10px 12px;font-size:12.5px;margin-bottom:12px}
+
+/* ---------- nav ---------- */
+nav{
+  position:fixed;left:0;right:0;bottom:0;z-index:50;background:rgba(255,255,255,.94);
+  backdrop-filter:blur(12px);border-top:1px solid var(--line);
+  display:flex;padding-bottom:env(safe-area-inset-bottom);
+}
+nav button{flex:1;padding:9px 0 8px;color:var(--muted);font-size:10.5px;letter-spacing:.02em;display:flex;flex-direction:column;align-items:center;gap:3px}
+nav button .g{font-size:17px;line-height:1}
+nav button.on{color:var(--accent-deep);font-weight:700}
+nav button.on .g{transform:translateY(-1px)}
+
+/* ---------- toast ---------- */
+#toast{
+  position:fixed;left:50%;bottom:calc(76px + env(safe-area-inset-bottom));transform:translate(-50%,10px);
+  background:var(--ink);color:#fff;padding:9px 16px;border-radius:999px;font-size:13px;z-index:80;
+  opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;
+}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media (min-width:560px){.fields{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <h1>オープン戦 成績管理</h1>
+  <button class="eyebrow" id="syncBtn" style="border:none;background:none;padding:4px 0">scorebook</button>
+</header>
+
+<div id="errBar" style="display:none;background:#FBECE6;color:#B4441E;padding:10px 14px;font-size:12.5px"></div>
+<main id="view"></main>
+
+<nav>
+  <button data-tab="stats" class="on"><span class="g">▤</span>成績一覧</button>
+  <button data-tab="games"><span class="g">◈</span>試合</button>
+  <button data-tab="player"><span class="g">◍</span>個別成績</button>
+  <button data-tab="edit"><span class="g">⚙</span>編集</button>
+</nav>
+
+<div class="backdrop" id="backdrop"></div>
+<div class="sheet" id="sheet">
+  <div class="sheet-head"><h2 id="sheetTitle"></h2><button class="x" id="sheetClose">✕</button></div>
+  <div class="sheet-body" id="sheetBody"></div>
+  <div class="sheet-foot" id="sheetFoot"></div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+"use strict";
+
+/* ============================================================
+   保存（ここだけ差し替えれば、後からサーバー共有に切り替えられます）
+   ============================================================ */
+const APP_VERSION = "2026-08-21g";
+const KEY = "rikkyo-scorebook-v1";
+const DIRTY_KEY = "rikkyo-scorebook-dirty";
+
+/* ブラウザが古いHTMLを覚えていると、いつまでも古い画面のままになる。
+   サーバー上の版と見比べて、違っていたら読み直す。 */
+async function checkAppVersion(){
+  try{
+    const r = await fetch(location.pathname + "?appcheck=" + Date.now(), {cache:"no-store"});
+    if(!r.ok) return;
+    const t = await r.text();
+    const m = t.match(/APP_VERSION\s*=\s*"([^"]+)"/);
+    if(m && m[1] !== APP_VERSION && location.search.indexOf("v=" + m[1]) < 0){
+      location.replace(location.pathname + "?v=" + encodeURIComponent(m[1]));
+    }
+  }catch(e){}
+}
+const store = {
+  async load(){
+    try{
+      if(window.storage){
+        const r = await window.storage.get(KEY, false);
+        if(r && r.value) return JSON.parse(r.value);
+      }
+    }catch(e){/* キー未作成 */}
+    try{
+      const s = localStorage.getItem(KEY);
+      if(s) return JSON.parse(s);
+    }catch(e){}
+    return null;
+  },
+  async save(obj){
+    /* 共有中で合言葉があるときは、端末にも暗号化した状態でしか残さない。
+       こうしておくと圏外でも合言葉を入れれば直前の内容を見られる。 */
+    let payload = obj;
+    if(canSync() && conn.pass){
+      try{ payload = await encryptData(obj, conn.pass); }catch(e){ return false; }
+    }
+    const s = JSON.stringify(payload);
+    try{ if(window.storage){ await window.storage.set(KEY, s, false); return true; } }catch(e){}
+    try{ localStorage.setItem(KEY, s); return true; }catch(e){}
+    return false;
+  }
+};
+
+/* ============================================================
+   共有（GitHubのファイルを置き場にする）
+   ============================================================ */
+const CONN_KEY = "rikkyo-scorebook-conn";
+let conn = {owner:"", repo:"", branch:"main", path:"data.json", token:"", pass:""};
+let sync = {state:"off", at:0, sha:null, base:0, msg:""};
+
+let legacyToken = "";
+function loadConn(){
+  try{
+    const s = localStorage.getItem(CONN_KEY);
+    if(s){ const o = JSON.parse(s); conn = Object.assign(conn, o); legacyToken = o.token || ""; }
+  }catch(e){}
+  conn.pass = ""; conn.token = "";
+  /* 合言葉もトークンも端末には残さない。トークンはパスキーで取り出す */
+  try{ localStorage.removeItem("rikkyo-scorebook-token"); }catch(e){}
+  if(!conn.owner){
+    const m = location.hostname.match(/^([^.]+)\.github\.io$/);
+    if(m){ conn.owner = m[1]; conn.repo = (location.pathname.split("/")[1] || ""); }
+  }
+}
+function saveConn(){
+  const keep = {owner:conn.owner, repo:conn.repo, branch:conn.branch, path:conn.path};
+  try{ localStorage.setItem(CONN_KEY, JSON.stringify(keep)); }catch(e){}
+}
+const canSync = () => !!(conn.owner && conn.repo && conn.path);
+const canEdit = () => !canSync() || !!conn.token;
+const hasAuth = () => !!(S.auth && S.auth.keyBox);
+
+function clearError(){
+  const el = document.getElementById("errBar");
+  if(el){ el.style.display = "none"; el.textContent = ""; }
+}
+function setSync(state, msg){
+  if(state === "ok") clearError();
+  sync.state = state; sync.msg = msg || "";
+  const el = document.getElementById("syncBtn");
+  if(!el) return;
+  const t = {
+    off:"端末内のみ", sync:"通信中…", ok:"同期済 " + new Date(sync.at||Date.now()).toTimeString().slice(0,5),
+    dirty:"未送信", err:"エラー"
+  }[state] || "";
+  el.textContent = (canSync() ? (canEdit()?"編集 ":"閲覧 ") : "") + t;
+  el.className = "eyebrow" + (state==="ok"?" ok":state==="err"?" err":"");
+}
+let locked = false, lockMsg = "", editMsg = "";
+let lastRaw = null;    /* 最後に手に入れた中身（暗号化されたまま） */
+let cachedRaw = null;  /* 起動時に端末に残っていた控え */
+function bytesToB64(u8){
+  let bin = "";
+  for(let i=0;i<u8.length;i+=0x8000) bin += String.fromCharCode.apply(null, u8.subarray(i, i+0x8000));
+  return btoa(bin);
+}
+function b64ToBytes(b){
+  const bin = atob(String(b).replace(/\s/g,""));
+  const u = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) u[i] = bin.charCodeAt(i);
+  return u;
+}
+async function sha256hex(str){
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("scorebook:" + str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+async function deriveKey(pass, salt){
+  const km = await crypto.subtle.importKey("raw", new TextEncoder().encode(pass), "PBKDF2", false, ["deriveKey"]);
+  return crypto.subtle.deriveKey(
+    {name:"PBKDF2", salt, iterations:150000, hash:"SHA-256"},
+    km, {name:"AES-GCM", length:256}, false, ["encrypt","decrypt"]);
+}
+async function encryptData(obj, pass){
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await deriveKey(pass, salt);
+  const ct = await crypto.subtle.encrypt({name:"AES-GCM", iv}, key, new TextEncoder().encode(JSON.stringify(obj)));
+  return {enc:"aes-gcm-256", v:1, updatedAt: obj.updatedAt || Date.now(),
+          salt: bytesToB64(salt), iv: bytesToB64(iv), ct: bytesToB64(new Uint8Array(ct))};
+}
+async function decryptData(pkg, pass){
+  const key = await deriveKey(pass, b64ToBytes(pkg.salt));
+  const buf = await crypto.subtle.decrypt({name:"AES-GCM", iv:b64ToBytes(pkg.iv)}, key, b64ToBytes(pkg.ct));
+  return JSON.parse(new TextDecoder().decode(buf));
+}
+async function encBox(str, pass){
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await deriveKey(pass, salt);
+  const ct = await crypto.subtle.encrypt({name:"AES-GCM", iv}, key, new TextEncoder().encode(str));
+  return {salt: bytesToB64(salt), iv: bytesToB64(iv), ct: bytesToB64(new Uint8Array(ct))};
+}
+async function decBox(box, pass){
+  const key = await deriveKey(pass, b64ToBytes(box.salt));
+  const buf = await crypto.subtle.decrypt({name:"AES-GCM", iv:b64ToBytes(box.iv)}, key, b64ToBytes(box.ct));
+  return new TextDecoder().decode(buf);
+}
+async function decodePayload(raw){
+  if(raw && raw.enc){
+    if(!conn.pass){ locked = true; lockMsg = ""; throw new Error("LOCKED"); }
+    try{ return await decryptData(raw, conn.pass); }
+    catch(e){ locked = true; lockMsg = "合言葉が違います。もう一度入力してください。"; throw new Error("LOCKED"); }
+  }
+  return raw;
+}
+function b64encode(str){
+  const bytes = new TextEncoder().encode(str);
+  let bin = "";
+  for(let i=0;i<bytes.length;i+=0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i+0x8000));
+  return btoa(bin);
+}
+function b64decode(b64){
+  const bin = atob(String(b64).replace(/\s/g,""));
+  const bytes = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
+  return new TextDecoder().decode(bytes);
+}
+function apiURL(){
+  return `https://api.github.com/repos/${conn.owner}/${conn.repo}/contents/${encodeURI(conn.path)}`;
+}
+async function apiGet(){
+  const h = {Accept:"application/vnd.github+json"};
+  if(conn.token) h.Authorization = "Bearer " + conn.token;
+  const r = await fetch(apiURL() + "?ref=" + encodeURIComponent(conn.branch) + "&t=" + Date.now(), {headers:h, cache:"no-store"});
+  if(r.status === 404) return null;
+  if(r.status === 401 || r.status === 403){
+    let why = "";
+    try{ const j = await r.json(); if(j && j.message) why = "：" + j.message; }catch(e){}
+    throw new Error(`トークンが拒否されました (${r.status})${why}`);
+  }
+  if(!r.ok) throw new Error("読み込みに失敗しました (" + r.status + ")");
+  const j = await r.json();
+  return {sha:j.sha, data:JSON.parse(b64decode(j.content))};
+}
+async function rawGet(){
+  const url = `https://raw.githubusercontent.com/${conn.owner}/${conn.repo}/${conn.branch}/${encodeURI(conn.path)}?t=${Date.now()}`;
+  const r = await fetch(url, {cache:"no-store"});
+  if(r.status === 404) return null;
+  if(!r.ok) throw new Error("読み込みに失敗しました (" + r.status + ")");
+  return {sha:null, data: await r.json()};
+}
+async function apiPut(json, sha){
+  const body = {
+    message: "成績更新 " + new Date().toLocaleString("ja-JP"),
+    content: b64encode(json), branch: conn.branch
+  };
+  if(sha) body.sha = sha;
+  const r = await fetch(apiURL(), {
+    method:"PUT",
+    headers:{Accept:"application/vnd.github+json", Authorization:"Bearer "+conn.token, "Content-Type":"application/json"},
+    body: JSON.stringify(body)
+  });
+  if(r.status === 401 || r.status === 403){
+    let why = "";
+    try{ const j = await r.json(); if(j && j.message) why = "：" + j.message; }catch(e){}
+    throw new Error(`トークンが拒否されました (${r.status})${why}`);
+  }
+  if(r.status === 409 || r.status === 422) throw new Error("CONFLICT");
+  if(!r.ok){
+    let detail = "";
+    try{ const j = await r.json(); detail = j && j.message ? "：" + j.message : ""; }catch(e){}
+    throw new Error("保存に失敗しました (" + r.status + ")" + detail);
+  }
+  const j = await r.json();
+  return j.content && j.content.sha;
+}
+function normalize(d){
+  const o = Object.assign({players:[], games:[], bat:{}, pit:{}, updatedAt:0}, d||{});
+  o.players.forEach(p=>{ if(p.grade===undefined) p.grade = /^[1-4]$/.test(String(p.num||"")) ? String(p.num) : ""; });
+  return o;
+}
+let lastSrc = "";
+async function fetchRemote(){
+  /* api.github.com は中継キャッシュを挟まないので常に最新。
+     トークンなしでも読めるが回数制限があるため、失敗したら raw に切り替える。 */
+  try{ const r = await apiGet(); lastSrc = "API"; return r; }
+  catch(e){
+    if(conn.token) throw e;
+    const r = await rawGet(); lastSrc = "raw"; return r;
+  }
+}
+async function pull(opts){
+  opts = opts || {};
+  if(!canSync()) return;
+  setSync("sync");
+  try{
+    const got = await fetchRemote();
+    if(got && got.data && !opts.force && conn.token && hasUnsent() && (S.updatedAt||0) > (got.data.updatedAt||0)){
+      sync.sha = got.sha; setSync("dirty"); schedulePush(); return;   /* この端末のほうが新しい */
+    }
+    if(got && got.data){
+      lastRaw = got.data;
+      const data = await decodePayload(got.data);
+      S = normalize(data); locked = false; lockMsg = "";
+      sync.sha = got.sha; sync.base = S.updatedAt || 0;
+      await store.save(S);
+    }
+    sync.at = Date.now(); setSync("ok");
+    if(!opts.silent) render();
+    if(opts.toast) toast("最新を読み込みました");
+  }catch(e){
+    if(e.message === "LOCKED"){ setSync("ok"); render(); return; }
+    setSync("err"); showError("読み込み: " + e.message);
+  }
+}
+let pushTimer = null;
+function markDirty(on){
+  try{ on ? localStorage.setItem(DIRTY_KEY,"1") : localStorage.removeItem(DIRTY_KEY); }catch(e){}
+}
+function hasUnsent(){
+  try{ return localStorage.getItem(DIRTY_KEY) === "1"; }catch(e){ return false; }
+}
+function schedulePush(){
+  if(!canSync() || !conn.token) return;
+  markDirty(true);
+  setSync("dirty");
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(()=>push(), 2500);
+}
+async function push(force, retried){
+  if(!canSync() || !conn.token) return;
+  setSync("sync");
+  try{
+    let sha = sync.sha;
+    try{
+      const cur = await apiGet();
+      if(cur){
+        sha = cur.sha;
+        const remoteAt = (cur.data && cur.data.updatedAt) || 0;
+        if(!force && sync.base && remoteAt > sync.base){
+          setSync("dirty");
+          if(confirm("他の端末で先に更新されています。\n\nOK：相手の内容を読み込む（この端末の未送信分は消えます）\nキャンセル：この端末の内容で上書きする")){
+            await pull({toast:true, force:true}); return;
+          }
+          return push(true);
+        }
+      }
+    }catch(e){ if(/権限|トークン/.test(e.message)) throw e; }
+    S.updatedAt = Date.now();
+    const payload = conn.pass ? await encryptData(S, conn.pass) : S;
+    const newSha = await apiPut(JSON.stringify(payload), sha);
+    sync.sha = newSha || sha; sync.base = S.updatedAt; sync.at = Date.now();
+    markDirty(false); setSync("ok");
+  }catch(e){
+    if(e.message === "CONFLICT" && !retried){ sync.sha = null; return push(true, true); }
+    setSync("err"); showError("送信: " + e.message);
+    throw e;
+  }
+}
+
+/* ============================================================
+   状態
+   ============================================================ */
+let S = { players:[], games:[], bat:{}, pit:{} };
+let ui = { tab:"stats", side:"bat", team:"A", period:"all", from:"", to:"", sort:"ops", pmode:"stats", badge:"grade", gview:"list", calMonth:"", table:false, playerFrom:"picker", statsScroll:0, gameId:null, playerId:null, pside:"bat", gteam:"A" };
+
+const uid = () => Math.random().toString(36).slice(2,9) + Date.now().toString(36).slice(-3);
+let saveTimer = null;
+function persist(){
+  S.updatedAt = Date.now();
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(()=>store.save(S), 150);
+  schedulePush();
+}
+function showError(msg){
+  const el = document.getElementById("errBar");
+  if(!el) return;
+  el.textContent = "エラー: " + msg + "（画面を再読み込みしてください）";
+  el.style.display = "block";
+}
+window.addEventListener("error", e=>{ showError(e.message || "不明なエラー"); });
+window.addEventListener("unhandledrejection", e=>{
+  const r = e.reason; showError((r && (r.message||r)) || "不明なエラー");
+});
+function toast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove("show"), 1800);
+}
+
+/* ============================================================
+   計算
+   ============================================================ */
+const BAT_FIELDS = [
+  {k:"ab",  n:"打数"},   {k:"h",   n:"安打"},   {k:"d2",  n:"二塁打"},
+  {k:"d3",  n:"三塁打"}, {k:"hr",  n:"本塁打"}, {k:"rbi", n:"打点"},
+  {k:"r",   n:"得点"},   {k:"so",  n:"三振"},   {k:"bb",  n:"四球"},
+  {k:"hbp", n:"死球"},   {k:"sh",  n:"犠打"},   {k:"sf",  n:"犠飛"},
+  {k:"sb",  n:"盗塁"},   {k:"cs",  n:"盗塁死"}
+];
+const PIT_FIELDS = [
+  {k:"bf", n:"打者"}, {k:"ab", n:"打数"}, {k:"np", n:"投球数"},
+  {k:"h",  n:"安打"}, {k:"hr", n:"本塁打"},{k:"bb", n:"四球"},
+  {k:"hbp",n:"死球"}, {k:"so", n:"三振"}, {k:"wp", n:"暴投"},
+  {k:"r",  n:"失点"}, {k:"er", n:"自責点"}
+];
+
+const RISK_FIELDS = [
+  {k:"rk_out", n:"完全アウト", short:"完全", cls:"r-out", hint:"内野フライ・三振"},
+  {k:"rk_gb",  n:"ゴロ",       short:"ゴロ", cls:"r-gb"},
+  {k:"rk_fb",  n:"外野フライ・ライナー", short:"外フライ", cls:"r-fb"},
+  {k:"rk_bb",  n:"四死球",     short:"四死球", cls:"r-bb"},
+  {k:"rk_hr",  n:"本塁打",     short:"本塁打", cls:"r-hr"}
+];
+const RISK_LINE = .60;
+
+function emptyBat(){ const o={}; BAT_FIELDS.forEach(f=>o[f.k]=0); return o; }
+function emptyPit(){ const o={outs:0, velo:0}; PIT_FIELDS.forEach(f=>o[f.k]=0); RISK_FIELDS.forEach(f=>o[f.k]=0); return o; }
+
+function sumBat(rows){
+  const t = emptyBat(); t.g = 0;
+  rows.forEach(r=>{ BAT_FIELDS.forEach(f=>t[f.k]+= (+r[f.k]||0)); t.g++; });
+  return t;
+}
+function sumPit(rows){
+  const t = emptyPit(); t.g = 0;
+  rows.forEach(r=>{
+    PIT_FIELDS.forEach(f=>t[f.k]+= (+r[f.k]||0));
+    RISK_FIELDS.forEach(f=>t[f.k]+= (+r[f.k]||0));
+    t.outs += (+r.outs||0);
+    t.velo = Math.max(t.velo, +r.velo||0);
+    t.g++;
+  });
+  return t;
+}
+function batDerive(t){
+  const single = t.h - t.d2 - t.d3 - t.hr;
+  const tb  = single + 2*t.d2 + 3*t.d3 + 4*t.hr;
+  const pa  = t.ab + t.bb + t.hbp + t.sh + t.sf;
+  const obpD = t.ab + t.bb + t.hbp + t.sf;
+  const avg = t.ab ? t.h/t.ab : null;
+  const obp = obpD ? (t.h + t.bb + t.hbp)/obpD : null;
+  const slg = t.ab ? tb/t.ab : null;
+  return {
+    single, tb, pa, avg, obp, slg,
+    ops: (obp!=null && slg!=null) ? obp+slg : null,
+    iso: (avg!=null && slg!=null) ? slg-avg : null,
+    bbk: t.so ? t.bb/t.so : null,
+    sbp: (t.sb+t.cs) ? t.sb/(t.sb+t.cs) : null
+  };
+}
+function pitDerive(t){
+  const ip = t.outs/3;
+  return {
+    ip,
+    era:  t.outs ? t.er*27/t.outs : null,
+    whip: t.outs ? (t.h + t.bb + t.hbp)*3/t.outs : null,
+    kpct: t.bf ? t.so/t.bf : null,
+    kbb:  t.bb ? t.so/t.bb : null
+  };
+}
+
+function riskDerive(t){
+  const total = RISK_FIELDS.reduce((a,f)=>a+(+t[f.k]||0), 0);
+  const pct = {};
+  RISK_FIELDS.forEach(f=> pct[f.k] = total ? t[f.k]/total : null);
+  return {total, pct, core: total ? (t.rk_out + t.rk_gb)/total : null};
+}
+
+/* 表示フォーマット */
+const dash = "—";
+function f3(v){ if(v==null||!isFinite(v)) return dash; const s=v.toFixed(3); return v<1 && v>=0 ? s.slice(1) : s; }
+function f2(v){ return (v==null||!isFinite(v)) ? dash : v.toFixed(2); }
+function fpc(v){ return (v==null||!isFinite(v)) ? dash : Math.round(v*100)+"%"; }
+function fip(outs){ const w=Math.floor(outs/3), r=outs%3; return w + (r? " "+r+"/3" : ""); }
+
+/* チーム基準（エクセルの表記に合わせています） */
+const MARK = {
+  ops:{min:.400,max:1.200,base:.700,good:.900},
+  iso:{min:0,max:.300,base:.150,good:.170},
+  bbk:{min:0,max:2,good:1.00},
+  avg:{min:.100,max:.500,base:.250,good:.300},
+  era:{min:0,max:6,good:2.00,rev:true},
+  whip:{min:.60,max:2.20,good:1.20,rev:true},
+  kbb:{min:0,max:6,good:3.50}
+};
+function isGood(key,v){
+  const m = MARK[key]; if(!m || v==null || !isFinite(v)) return false;
+  return m.rev ? v <= m.good : v >= m.good;
+}
+function gauge(key,v){
+  const m = MARK[key]; if(!m) return "";
+  const pos = x => Math.max(0, Math.min(100, (x-m.min)/(m.max-m.min)*100));
+  let h = '<div class="gauge">';
+  if(m.base!=null) h += `<i style="left:${pos(m.base)}%"></i>`;
+  h += `<i class="hi" style="left:${pos(m.good)}%"></i>`;
+  if(v!=null && isFinite(v)) h += `<b style="left:${pos(v)}%"></b>`;
+  h += "</div>";
+  return h;
+}
+
+function riskBar(t, showLegend){
+  const d = riskDerive(t);
+  if(!d.total) return `<div class="small muted">リスク管理の入力がありません</div>`;
+  let h = `<div class="rwrap"><div class="rbar">` +
+    RISK_FIELDS.map(f=>{
+      const w = t[f.k]/d.total*100;
+      return w ? `<span class="rseg ${f.cls}" style="width:${w}%"></span>` : "";
+    }).join("") + `</div><i class="r60"></i></div>`;
+  if(showLegend){
+    h += `<div class="rlegend">` + RISK_FIELDS.map(f=>
+      `<span><i class="${f.cls}"></i>${f.n} <b class="num">${fpc(d.pct[f.k])}</b></span>`).join("") + `</div>`;
+  }
+  return h;
+}
+function riskVerdict(d){
+  if(!d.total) return "";
+  const ok = d.core >= RISK_LINE;
+  return `<div class="rverdict ${ok?"ok":""}">
+    <div><span class="k">完全アウト＋ゴロ</span><b class="num">${fpc(d.core)}</b></div>
+    <div class="small">${ok ? "60%を超えています。失点のリスクに優れた投球です。"
+      : "あと"+Math.ceil(RISK_LINE*d.total - d.total*d.core)+"つが完全アウトかゴロなら60%に届きます。"}</div>
+  </div>`;
+}
+
+/* ============================================================
+   期間フィルタ
+   ============================================================ */
+function periodGames(){
+  let gs = S.games.slice().sort((a,b)=> a.date < b.date ? 1 : -1);
+  if(ui.team !== "all") gs = gs.filter(g => (g.team||"") === ui.team);
+  const today = new Date();
+  if(ui.period==="all") return gs;
+  if(ui.period==="last6") return gs.slice(0, 6);
+  if(ui.period==="d30"){
+    const d = new Date(today.getTime()-29*864e5).toISOString().slice(0,10);
+    return gs.filter(g=>g.date>=d);
+  }
+  return gs.filter(g=> (!ui.from || g.date>=ui.from) && (!ui.to || g.date<=ui.to));
+}
+function hasScore(g){ return g && g.rs !== "" && g.ra !== "" && g.rs != null && g.ra != null; }
+function gameResult(g){
+  if(!hasScore(g)) return null;
+  return (+g.rs) > (+g.ra) ? "win" : (+g.rs) < (+g.ra) ? "lose" : "draw";
+}
+function resultTag(g){
+  const r = gameResult(g);
+  if(!r) return "";
+  const label = {win:"勝", lose:"敗", draw:"分"}[r];
+  return `<span class="res ${r}">${label}</span>`;
+}
+function scoreText(g){ return hasScore(g) ? `${+g.rs}-${+g.ra}` : ""; }
+function record(games){
+  let w=0,l=0,d=0;
+  games.forEach(g=>{ const r=gameResult(g); if(r==="win")w++; else if(r==="lose")l++; else if(r==="draw")d++; });
+  return {w,l,d};
+}
+function teamLabel(){ return ui.team==="all" ? "A・B合計" : ui.team + "チーム"; }
+function teamTag(g){ return g.team ? `<span class="badge tm${g.team}">${g.team}</span>` : ""; }
+function periodLabel(){
+  if(ui.period==="all") return "全期間";
+  if(ui.period==="last6") return "直近6試合";
+  if(ui.period==="d30") return "直近30日";
+  return (ui.from||"開始") + " 〜 " + (ui.to||"今日");
+}
+function rowsFor(side, playerId, games){
+  const src = side==="bat" ? S.bat : S.pit;
+  const out = [];
+  games.forEach(g=>{ const r = src[g.id] && src[g.id][playerId]; if(r) out.push(Object.assign({_g:g}, r)); });
+  return out;
+}
+/* ============================================================
+   調子（直近の内容を、その選手自身の通年の内容と見比べて判定）
+   ============================================================ */
+const FORM_LEVELS = [
+  {min: 1.00,  key:"f2",  label:"絶好調", color:"#C42AA6"},
+  {min: 0.35,  key:"f1",  label:"好調",   color:"#DB3B2C"},
+  {min:-0.35,  key:"f0",  label:"普通",   color:"#C79300"},
+  {min:-1.00,  key:"fm1", label:"不調",   color:"#2E7FD6"},
+  {min:-99,    key:"fm2", label:"絶不調", color:"#6E2FB0"}
+];
+/* つやのある丸顔。5段階で色と表情が変わる */
+const FACE_STYLE = {
+  f2:  {c1:"#FBB6EE", c2:"#C42AA6", eyes:"bar",   mouth:"laugh", sx:1.00, sy:1.00, cy:19, deco:"hot"},
+  f1:  {c1:"#FFB3AA", c2:"#DB3B2C", eyes:"open",  mouth:"smile", sx:1.01, sy:0.96, cy:20.6},
+  f0:  {c1:"#FFE484", c2:"#E0A400", eyes:"open",  mouth:"flat",  sx:1.04, sy:0.89, cy:21.8},
+  fm1: {c1:"#AEDBFF", c2:"#2E7FD6", eyes:"sad",   mouth:"frown", sx:1.08, sy:0.78, cy:23.6},
+  fm2: {c1:"#C9A4F0", c2:"#6E2FB0", eyes:"brow",  mouth:"moan",  sx:1.12, sy:0.74, cy:25.4,
+        body:"M2.5 22 Q3 7 20 6.5 Q37 7 37.5 21.5 Q38.5 34 20 34.5 Q1.5 35 2.5 22 Z", deco:"cold"}
+};
+const INK = "#2B2233";
+/* faces/f2.png のような画像を置くと、そちらが優先して使われます */
+const FACE_DIR = "faces/";
+function faceHTML(key, size){
+  return `<img src="${FACE_DIR}${key}.png" width="${size}" height="${size}" alt=""
+    style="display:block;object-fit:contain"
+    onerror="this.outerHTML=faceSVG('${key}',${size})">`;
+}
+function faceSVG(key, size){
+  const st = FACE_STYLE[key] || FACE_STYLE.f0;
+  const id = "fg-" + key;
+  const EYES = {
+    open: `<ellipse cx="14" cy="16.5" rx="2.4" ry="3.2" fill="${INK}"/>
+           <ellipse cx="26" cy="16.5" rx="2.4" ry="3.2" fill="${INK}"/>`,
+    /* 絶好調: 縦長の棒目 */
+    bar:  `<rect x="14.6" y="11.5" width="3.2" height="7.4" rx="1.5" fill="${INK}"/>
+           <rect x="22.2" y="11.5" width="3.2" height="7.4" rx="1.5" fill="${INK}"/>`,
+    /* 不調: 谷型の閉じ目（下がって見える） */
+    sad:  `<path d="M10.5 14.4 Q14 20.2 17.5 14.4" stroke="${INK}" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+           <path d="M22.5 14.4 Q26 20.2 29.5 14.4" stroke="${INK}" stroke-width="2.2" fill="none" stroke-linecap="round"/>`,
+    /* 絶不調: 外側が上がった困り眉＋深い谷型の閉じ目 */
+    brow: `<path d="M9.6 13.2 Q14 20.8 18.4 14.6" stroke="${INK}" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+           <path d="M30.4 13.2 Q26 20.8 21.6 14.6" stroke="${INK}" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+           <path d="M8.8 10.6 Q13 9.4 17.4 12" stroke="${INK}" stroke-width="1.7" fill="none" stroke-linecap="round" opacity=".85"/>
+           <path d="M31.2 10.6 Q27 9.4 22.6 12" stroke="${INK}" stroke-width="1.7" fill="none" stroke-linecap="round" opacity=".85"/>`
+  };
+  const MOUTH = {
+    /* 絶好調: 大きく開けた口・上の歯・舌 */
+    laugh: `<path d="M9.5 21 Q20 18.2 30.5 21 Q30.5 33.5 20 33.5 Q9.5 33.5 9.5 21 Z" fill="${INK}"/>
+            <rect x="17.6" y="20.4" width="4.8" height="3.4" rx="1.1" fill="#fff"/>
+            <ellipse cx="20" cy="29.6" rx="2.8" ry="2.4" fill="#E23A3A"/>`,
+    smile: `<path d="M11.5 23.5 Q20 31.5 28.5 23.5" stroke="${INK}" stroke-width="2.6" fill="none" stroke-linecap="round"/>`,
+    flat:  `<path d="M13 26.5 Q20 24 27 26.5" stroke="${INK}" stroke-width="2.4" fill="none" stroke-linecap="round"/>`,
+    frown: `<path d="M12.5 28.5 Q20 21.5 27.5 28.5" stroke="${INK}" stroke-width="2.6" fill="none" stroke-linecap="round"/>`,
+    /* 絶不調: 力なく開いた口 */
+    moan:  `<path d="M14.6 23.6 Q20 22.2 25.4 23.6 Q26.4 30.6 20 30.6 Q13.6 30.6 14.6 23.6 Z" fill="${INK}"/>`
+  };
+  const DECO = {
+    /* 絶好調: 湯気と勢いの線、足元の影 */
+    hot: `<ellipse cx="20" cy="41.5" rx="11" ry="2.6" fill="#17151C" opacity=".8"/>
+          <g stroke="${INK}" stroke-width="1.7" fill="none" stroke-linecap="round">
+            <path d="M1.5 6 Q-2 12 -0.5 18"/><path d="M6.5 2.5 Q2.5 8 3.5 14"/>
+            <path d="M38.5 6 Q42 12 40.5 18"/><path d="M33.5 2.5 Q37.5 8 36.5 14"/>
+          </g>
+          <g fill="#CFE4F5" stroke="#8FB6D8" stroke-width="0.9">
+            <circle cx="-1" cy="30" r="3"/><circle cx="3" cy="33" r="2.2"/>
+            <circle cx="41" cy="30" r="3"/><circle cx="37" cy="33" r="2.2"/>
+          </g>`,
+    /* 絶不調: 頭上に落ちる線 */
+    cold: `<g stroke="#3F5AC4" stroke-width="1.5" stroke-linecap="round" opacity=".9">
+             <path d="M8 -3 L7 7"/><path d="M14 -4 L13.2 6"/><path d="M20 -4.5 L20 6"/>
+             <path d="M26 -4 L26.8 6"/><path d="M32 -3 L33 7"/>
+           </g>`
+  };
+  const body = st.body
+    ? `<path d="${st.body}" fill="url(#${id})"/>`
+    : `<circle cx="20" cy="20" r="18.5" fill="url(#${id})"/>`;
+  return `<svg viewBox="-6 -6 52 52" width="${size}" height="${size}" aria-hidden="true">
+    <defs>
+      <radialGradient id="${id}" cx="34%" cy="26%" r="78%">
+        <stop offset="0%" stop-color="#fff" stop-opacity=".92"/>
+        <stop offset="34%" stop-color="${st.c1}"/>
+        <stop offset="100%" stop-color="${st.c2}"/>
+      </radialGradient>
+      <radialGradient id="${id}-g" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#fff" stop-opacity=".85"/>
+        <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    ${st.deco ? DECO[st.deco] : ""}
+    <g transform="translate(20 ${st.cy}) scale(${st.sx} ${st.sy}) translate(-20 -20)">
+      ${body}
+      <ellipse cx="17" cy="9.5" rx="9.5" ry="5.5" fill="url(#${id}-g)"/>
+      ${EYES[st.eyes] || EYES.open}${MOUTH[st.mouth]}
+    </g>
+  </svg>`;
+}
+const FORM_BAT_GAMES = 6;   /* 野手: 直近6試合 */
+const FORM_PIT_DAYS  = 30;  /* 投手: 直近30日に登板した試合 */
+function recentRows(side, rows){
+  if(side === "bat") return rows.slice(0, FORM_BAT_GAMES);
+  const cut = new Date(Date.now() - (FORM_PIT_DAYS-1)*864e5).toISOString().slice(0,10);
+  return rows.filter(r => r._g && r._g.date >= cut);
+}
+function recentLabel(side, n){
+  return side === "bat" ? `直近${n}試合` : `直近${FORM_PIT_DAYS}日の${n}登板`;
+}
+
+function formGames(){
+  let gs = S.games.slice().sort((a,b)=> a.date < b.date ? 1 : -1);
+  if(ui.team !== "all") gs = gs.filter(g => (g.team||"") === ui.team);
+  return gs;
+}
+/* 直近の「絶対的な出来」を1つの数字にする（チーム内での位置を測るため） */
+function recentIndex(side, pid, gs){
+  const rows = recentRows(side, rowsFor(side, pid, gs));
+  if(side === "bat"){
+    const t = sumBat(rows), d = batDerive(t);
+    if(d.pa < 8 || d.ops == null) return null;
+    return d.ops;
+  }
+  const t = sumPit(rows), d = pitDerive(t);
+  if(t.outs < 6 || d.era == null || d.whip == null) return null;
+  return -(d.era * 0.5 + d.whip * 1.5);     /* 小さいほど良い指標なので符号を反転 */
+}
+let absCache = null;
+function teamZ(side, pid, gs){
+  const key = side + "|" + ui.team + "|" + (S.updatedAt||0) + "|" + S.games.length;
+  if(!absCache || absCache.key !== key){
+    const map = {}, vals = [];
+    S.players.filter(p => side==="bat" ? p.bats : p.pitches).forEach(p=>{
+      const v = recentIndex(side, p.id, gs);
+      if(v == null) return;
+      map[p.id] = v; vals.push(v);
+    });
+    let mean = 0, sd = 0;
+    if(vals.length >= 4){
+      mean = vals.reduce((a,b)=>a+b,0) / vals.length;
+      sd = Math.sqrt(vals.reduce((a,b)=>a+(b-mean)*(b-mean),0) / vals.length);
+    }
+    absCache = {key, map, mean, sd, n:vals.length};
+  }
+  const c = absCache;
+  if(c.n < 4 || !c.sd || c.map[pid] == null) return null;   /* 比べる相手が少なければ使わない */
+  return Math.max(-2, Math.min(2, (c.map[pid] - c.mean) / c.sd));
+}
+function meanVelo(rows){
+  const v = rows.map(r => +r.velo || 0).filter(x => x > 0);
+  return v.length ? v.reduce((a,b)=>a+b,0) / v.length : null;
+}
+function formOf(side, pid){
+  const gs = formGames();
+  const rows = rowsFor(side, pid, gs);
+  if(rows.length < 3) return null;
+  const rec = recentRows(side, rows);
+  if(!rec.length) return null;
+  const parts = [];
+  if(side === "bat"){
+    const B = sumBat(rows), bd = batDerive(B);
+    const R = sumBat(rec),  rd = batDerive(R);
+    if(bd.pa < 20 || rd.pa < 8) return null;
+    parts.push([(rd.ops - bd.ops) / 0.250, 5]);
+    parts.push([(rd.obp - bd.obp) / 0.100, 3]);
+    parts.push([-((R.so/rd.pa) - (B.so/bd.pa)) / 0.100, 2]);
+  }else{
+    const B = sumPit(rows), bd = pitDerive(B), br = riskDerive(B);
+    const R = sumPit(rec),  rd = pitDerive(R), rr = riskDerive(R);
+    if(B.outs < 15 || R.outs < 6) return null;
+    parts.push([(bd.era - rd.era) / 1.50, 2]);                                   /* 失点 */
+    parts.push([(bd.whip - rd.whip) / 0.40, 4]);                                 /* 走者を出す度合い */
+    if(bd.kpct != null && rd.kpct != null) parts.push([(rd.kpct - bd.kpct) / 0.080, 4]);
+    if(br.core != null && rr.core != null && rr.total >= 8) parts.push([(rr.core - br.core) / 0.120, 4]);
+    const bv = meanVelo(rows), rv = meanVelo(rec);
+    if(bv != null && rv != null) parts.push([(rv - bv) / 2.5, 2]);               /* 球速の変動 */
+  }
+  let sum = 0, w = 0;
+  parts.forEach(([v, weight])=>{
+    if(v == null || !isFinite(v)) return;
+    sum += Math.max(-3, Math.min(3, v)) * weight; w += weight;
+  });
+  if(!w) return null;
+  const self = sum / w;                       /* その選手自身の直近と通年の比較 */
+  const abs = teamZ(side, pid, gs);           /* チーム内での今の位置 */
+  const score = abs == null ? self : (self * 0.5 + abs * 0.5);
+  const lv = FORM_LEVELS.find(l => score >= l.min);
+  return {score, self, abs, key:lv.key, label:lv.label, color:lv.color, games:rec.length, side};
+}
+function sideOf(p){ return p.bats ? "bat" : "pit"; }
+function badgeHTML(p, side){
+  if(ui.badge === "form"){
+    const f = formOf(side || sideOf(p), p.id);
+    if(f) return `<span class="jersey fm ${f.key}" title="${f.label}">${faceHTML(f.key, 30)}</span>`;
+    return `<span class="jersey fm none" title="まだ判定できません">･･</span>`;
+  }
+  return `<span class="jersey gr ${gradeCls(p)}">${gradeTag(p)}</span>`;
+}
+function byGrade(a,b){ return (parseInt(b.grade||"0")||0)-(parseInt(a.grade||"0")||0) || a.name.localeCompare(b.name,"ja"); }
+function gradeTag(p){ return p.grade ? p.grade+"年" : "–"; }
+function playerName(id){ const p = S.players.find(p=>p.id===id); return p ? p.name : "(削除された選手)"; }
+function playerOf(id){ return S.players.find(p=>p.id===id); }
+function gameLabel(g){ return g.opponent || "（対戦相手なし）"; }
+function jp(d){ if(!d) return ""; const [y,m,dd]=d.split("-"); return `${+m}/${+dd}`; }
+
+/* ============================================================
+   描画
+   ============================================================ */
+const view = document.getElementById("view");
+function renderLock(){
+  view.innerHTML = `
+    <div class="card card-pad" style="margin-top:24px;text-align:center">
+      <div style="font-size:30px">🔒</div>
+      <div style="font-weight:600;font-size:16px;margin:8px 0 4px">合言葉を入力してください</div>
+      <div class="small muted" style="margin-bottom:16px">この成績データは暗号化されています。合言葉を知っている人だけが見られます。</div>
+      ${lockMsg?`<div class="err">${esc(lockMsg)}</div>`:""}
+      <input type="password" id="lockPass" placeholder="合言葉" autocomplete="off" style="text-align:center;margin-bottom:10px">
+      <button class="btn block" data-act="unlock">開く</button>
+      <div class="small muted" style="margin-top:14px">分からない場合はデータ班に聞いてください。<br>
+        読み込んだデータ: ${lastRaw && lastRaw.updatedAt ? new Date(lastRaw.updatedAt).toLocaleString("ja-JP") : "取得中"}${lastSrc?"（"+lastSrc+"）":""}</div>
+    </div>`;
+}
+function render(keepScroll){
+  document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on", b.dataset.tab===ui.tab));
+  if(locked){ renderLock(); return; }
+  if(ui.tab==="stats") renderStats();
+  else if(ui.tab==="games") ui.gameId ? renderGameDetail() : renderGames();
+  else if(ui.tab==="player") ui.playerId ? renderPlayerPage() : renderPlayerPicker();
+  else renderEdit();
+  if(!keepScroll) window.scrollTo(0,0);
+}
+
+/* ---------- 成績 ---------- */
+function renderStats(){
+  const games = periodGames();
+  const side = ui.side;
+  const ids = S.players.filter(p=> side==="bat" ? p.bats : p.pitches).map(p=>p.id);
+  const rows = [];
+  ids.forEach(id=>{
+    const rs = rowsFor(side, id, games);
+    if(!rs.length) return;
+    if(side==="bat"){ const t=sumBat(rs); rows.push({id, t, d:batDerive(t)}); }
+    else { const t=sumPit(rs); rows.push({id, t, d:pitDerive(t), r:riskDerive(t)}); }
+  });
+  const cols = colsFor(side);
+  if(!cols.some(c=>c.k===ui.sort)) ui.sort = side==="bat" ? "ops" : "era";
+  const col = colOf(side, ui.sort);
+  sortRows(rows, col);
+
+  let h = "";
+  h += `<div class="scroll-x" style="margin-bottom:8px">
+    ${chip("team","all","A・B合計")}${chip("team","A","Aチーム")}${chip("team","B","Bチーム")}
+  </div>`;
+  h += `<div class="scroll-x" style="margin-bottom:10px">
+    ${chip("period","all","全期間")}${chip("period","d30","直近30日")}${chip("period","last6","直近6試合")}${chip("period","custom","期間指定")}
+  </div>`;
+  if(ui.period==="custom"){
+    h += `<div class="card card-pad row" style="gap:8px">
+      <input type="date" id="fromD" value="${ui.from}"><span class="muted">〜</span><input type="date" id="toD" value="${ui.to}">
+    </div>`;
+  }
+  h += `<div class="spread" style="margin:4px 2px 10px">
+    <div class="scroll-x" style="gap:7px">${chip("side","bat","打者")}${chip("side","pit","投手")}</div>
+    <div class="row" style="gap:7px">
+      <span class="tgl">
+        <button class="${ui.badge==="grade"?"on":""}" data-act="setBadge" data-v="grade">学年</button>
+        <button class="${ui.badge==="form"?"on":""}" data-act="setBadge" data-v="form">調子</button>
+      </span>
+      <button class="chip ${ui.table?"on":""}" data-act="toggleTable">表で見る</button>
+    </div>
+  </div>`;
+  if(side==="pit" && !ui.table){
+    h += `<div class="scroll-x" style="margin-bottom:10px">
+      <button class="chip ${ui.pmode==="stats"?"on":""}" data-act="pmode" data-v="stats">成績</button>
+      <button class="chip ${ui.pmode==="risk"?"on":""}" data-act="pmode" data-v="risk">リスク管理</button></div>`;
+  }
+  h += `<div class="small muted" style="margin:0 2px 10px">${teamLabel()}・${periodLabel()}・${games.length}試合・${rows.length}名</div>`;
+
+  if(!S.players.length){
+    h += `<div class="card"><div class="empty"><strong>まず選手を登録します</strong>編集タブの「＋ 選手を登録」から、学年・名前・区分を追加してください。<br>
+      <button class="btn ghost" data-act="goEdit" style="margin-top:12px">編集タブへ</button></div></div>`;
+  }else if(!rows.length){
+    h += `<div class="card"><div class="empty"><strong>この期間の記録はまだありません</strong>「試合」タブで試合を追加し、選手ごとに成績を入力してください。</div></div>`;
+  }else if(ui.table){
+    h += sortChips(side) + tableHTML(cols, rows);
+  }else{
+    h += sortChips(side);
+    h += `<div class="card">` + rows.map(r=>{
+      const p = playerOf(r.id);
+      const hiCol = col.hi && col.hi(r) ? "color:var(--good)" : "";
+      if(side==="bat"){
+        return `<button class="list-item" data-act="player" data-id="${r.id}">
+          ${badgeHTML(p,"bat")}
+          <span class="li-main"><span class="li-name">${esc(p.name)}</span>
+            <span class="li-sub num">${r.d.pa}打席 ${r.t.h}安打 ${r.t.hr}本 ${r.t.rbi}打点 OPS${f3(r.d.ops)}</span></span>
+          <span class="li-val"><span class="b" style="${hiCol}">${col.f(r)}</span>
+            <span class="s">${col.n}</span></span>
+        </button>`;
+      }
+      if(ui.pmode==="risk"){
+        return `<button class="list-item" style="display:block;padding:12px 14px" data-act="player" data-id="${r.id}">
+          <div class="spread" style="margin-bottom:7px">
+            <span class="li-name"><span class="gchip ${gradeCls(p)}">${gradeTag(p)}</span> ${esc(p.name)}</span>
+            <span class="num" style="font-size:15px;font-weight:600;${r.r.core!=null&&r.r.core>=RISK_LINE?"color:var(--good)":""}">${fpc(r.r.core)}</span></div>
+          ${r.r.total ? riskBar(r.t, false) + `<div class="small muted num" style="margin-top:6px">計${r.r.total}　完全${fpc(r.r.pct.rk_out)}・ゴロ${fpc(r.r.pct.rk_gb)}・外フライ${fpc(r.r.pct.rk_fb)}・四死球${fpc(r.r.pct.rk_bb)}・本${fpc(r.r.pct.rk_hr)}</div>`
+                       : `<div class="small muted">リスク管理の入力がありません</div>`}
+        </button>`;
+      }
+      return `<button class="list-item" data-act="player" data-id="${r.id}">
+        ${badgeHTML(p,"pit")}
+        <span class="li-main"><span class="li-name">${esc(p.name)}</span>
+          <span class="li-sub num">${fip(r.t.outs)}回 防御率${f2(r.d.era)} ${r.t.so}三振${r.t.velo?" MAX"+r.t.velo:""}</span></span>
+        <span class="li-val"><span class="b" style="${hiCol}">${col.f(r)}</span>
+          <span class="s">${col.n}</span></span>
+      </button>`;
+    }).join("") + `</div>`;
+  }
+  h += glossary(side);
+  view.innerHTML = h;
+  restoreSortScroll();
+}
+let sortScroll = 0;
+function sortChips(side){
+  return `<div class="small muted" style="margin:0 2px 6px">並び替え（選んだ項目を大きく表示・強調します）</div>
+    <div class="scroll-x" id="sortRow" style="margin-bottom:10px">` +
+    colsFor(side).map(c=>`<button class="chip ${ui.sort===c.k?"on":""}" data-act="sort" data-v="${c.k}">${c.n}${c.asc?" ↓":""}</button>`).join("") +
+    `</div>`;
+}
+function restoreSortScroll(){
+  const sr = document.getElementById("sortRow");
+  if(!sr) return;
+  sr.scrollLeft = sortScroll;
+  sr.addEventListener("scroll", ()=>{ sortScroll = sr.scrollLeft; });
+}
+const GLOSSARY = {
+  bat:[
+    ["打率","安打÷打数。四球・死球・犠打・犠飛は打数に入りません。"],
+    ["打席と打数","打席は打席に立った回数すべて。打数はそこから四球・死球・犠打・犠飛を除いたものです。"],
+    ["出塁率","（安打＋四球＋死球）÷（打数＋四球＋死球＋犠飛）。どれだけ塁に出たか。"],
+    ["長打率","塁打÷打数。単打1・二塁打2・三塁打3・本塁打4として数えます。"],
+    ["OPS","出塁率＋長打率。打者の総合力の目安。チーム基準.700、優秀.900。"],
+    ["ISO","長打率−打率。長打の力だけを取り出した数字。平均.150、優秀.170。"],
+    ["BB/K","四球÷三振。選球眼の目安。優秀1.00以上。"],
+    ["塁打","単打＋二塁打×2＋三塁打×3＋本塁打×4。"],
+    ["調子（顔マーク）","2つを半分ずつ合わせた判定です。①自分比＝直近6試合を、その選手自身の全期間と見比べた変化（OPS・出塁率・三振の割合）。②チーム内＝直近5試合の出来が、チームの中でどのあたりかを標準偏差で見た位置。片方だけで決めないので、元々高い選手が少し落ちただけで不調にはならず、元々低い選手が少し上がっただけで絶好調にもなりません。打席数が少ないうちは判定しません。"]
+  ],
+  pit:[
+    ["防御率","自責点×9÷投球回。9回投げたときの自責点の平均。"],
+    ["WHIP","（安打＋四球＋死球）÷投球回。1回あたり何人の走者を出したか。優秀1.20以下。"],
+    ["K%","三振÷対戦打者。相手打者の何割から三振を取ったか。"],
+    ["K/BB","三振÷四球。優秀3.50以上。"],
+    ["完全アウト","内野フライと三振のこと。打球が野手の間を抜ける可能性がなく、最も安全なアウトです。"],
+    ["ゴロ","内野ゴロなど。長打になりにくく、併殺も期待できる打球です。"],
+    ["完全アウト＋ゴロ","この2つの合計が全体の60%を超えていれば、失点のリスクに優れた投球と言えます。"],
+    ["外野フライ・ライナー","長打や失点につながりやすい打球。割合が高いほど注意が必要です。"],
+    ["最高球速","その期間で計測できた最も速い球。試合ごとの推移は個別成績で見られます。"],
+    ["調子（顔マーク）","2つを半分ずつ合わせた判定です。①自分比＝直近30日に登板した試合を、その投手自身の全期間と見比べた変化。WHIP・K%・完全アウト＋ゴロを重めに見て、防御率と最高球速の変動も加味します。②チーム内＝直近30日の失点の防ぎ方が、チームの中でどのあたりかを標準偏差で見た位置。片方だけでは決めません。直近30日の登板が2回未満のときは判定しません。"]
+  ]
+};
+function glossary(side){
+  return `<details class="card" style="margin-top:16px"><summary class="card-pad" style="cursor:pointer;font-size:13.5px;color:var(--accent-deep);font-weight:600">指標の見かた</summary>
+    <div class="card-pad" style="padding-top:0">` +
+    GLOSSARY[side].map(g=>`<div style="margin-bottom:11px"><div style="font-weight:600;font-size:13px">${g[0]}</div>
+      <div class="small muted">${g[1]}</div></div>`).join("") + `</div></details>`;
+}
+function gradeCls(p){ return p && p.grade ? "g"+p.grade : ""; }
+function chip(group,val,label){
+  const on = ui[group]===val;
+  return `<button class="chip ${on?"on":""}" data-act="set" data-g="${group}" data-v="${val}">${label}</button>`;
+}
+const BAT_COLS = [
+  {k:"avg", n:"打率",   v:r=>r.d.avg, f:r=>f3(r.d.avg), hi:r=>isGood("avg",r.d.avg)},
+  {k:"ops", n:"OPS",    v:r=>r.d.ops, f:r=>f3(r.d.ops), hi:r=>isGood("ops",r.d.ops)},
+  {k:"iso", n:"ISO",    v:r=>r.d.iso, f:r=>f3(r.d.iso), hi:r=>isGood("iso",r.d.iso)},
+  {k:"bbk", n:"BB/K",   v:r=>r.d.bbk, f:r=>f2(r.d.bbk), hi:r=>isGood("bbk",r.d.bbk)},
+  {k:"obp", n:"出塁率", v:r=>r.d.obp, f:r=>f3(r.d.obp)},
+  {k:"slg", n:"長打率", v:r=>r.d.slg, f:r=>f3(r.d.slg)},
+  {k:"pa",  n:"打席",   v:r=>r.d.pa,  f:r=>r.d.pa},
+  {k:"ab",  n:"打数",   v:r=>r.t.ab,  f:r=>r.t.ab},
+  {k:"h",   n:"安打",   v:r=>r.t.h,   f:r=>r.t.h},
+  {k:"hr",  n:"本塁打", v:r=>r.t.hr,  f:r=>r.t.hr},
+  {k:"rbi", n:"打点",   v:r=>r.t.rbi, f:r=>r.t.rbi},
+  {k:"r",   n:"得点",   v:r=>r.t.r,   f:r=>r.t.r},
+  {k:"d2",  n:"二塁打", v:r=>r.t.d2,  f:r=>r.t.d2},
+  {k:"d3",  n:"三塁打", v:r=>r.t.d3,  f:r=>r.t.d3},
+  {k:"single", n:"単打", v:r=>r.d.single, f:r=>r.d.single},
+  {k:"tb",  n:"塁打",   v:r=>r.d.tb,  f:r=>r.d.tb},
+  {k:"bb",  n:"四球",   v:r=>r.t.bb,  f:r=>r.t.bb},
+  {k:"hbp", n:"死球",   v:r=>r.t.hbp, f:r=>r.t.hbp},
+  {k:"so",  n:"三振",   v:r=>r.t.so,  f:r=>r.t.so, asc:true},
+  {k:"sh",  n:"犠打",   v:r=>r.t.sh,  f:r=>r.t.sh},
+  {k:"sf",  n:"犠飛",   v:r=>r.t.sf,  f:r=>r.t.sf},
+  {k:"sb",  n:"盗塁",   v:r=>r.t.sb,  f:r=>r.t.sb},
+  {k:"cs",  n:"盗塁死", v:r=>r.t.cs,  f:r=>r.t.cs, asc:true},
+  {k:"sbp", n:"盗塁成功率", v:r=>r.d.sbp, f:r=>f3(r.d.sbp)}
+];
+const PIT_COLS = [
+  {k:"era",  n:"防御率", asc:true, v:r=>r.d.era, f:r=>f2(r.d.era), hi:r=>isGood("era",r.d.era)},
+  {k:"whip", n:"WHIP",   asc:true, v:r=>r.d.whip, f:r=>f2(r.d.whip), hi:r=>isGood("whip",r.d.whip)},
+  {k:"risk", n:"完全アウト+ゴロ", v:r=>r.r.core, f:r=>fpc(r.r.core), hi:r=>r.r.core!=null && r.r.core>=RISK_LINE},
+  {k:"kbb",  n:"K/BB",   v:r=>r.d.kbb, f:r=>f2(r.d.kbb), hi:r=>isGood("kbb",r.d.kbb)},
+  {k:"kpct", n:"K%",     v:r=>r.d.kpct, f:r=>fpc(r.d.kpct)},
+  {k:"velo", n:"最高球速", v:r=>r.t.velo||null, f:r=>r.t.velo||dash},
+  {k:"ip",   n:"投球回", v:r=>r.t.outs, f:r=>fip(r.t.outs)},
+  {k:"pso",  n:"三振",   v:r=>r.t.so, f:r=>r.t.so},
+  {k:"g",    n:"試合",   v:r=>r.t.g, f:r=>r.t.g},
+  {k:"bf",   n:"打者",   v:r=>r.t.bf, f:r=>r.t.bf},
+  {k:"pab",  n:"打数",   v:r=>r.t.ab, f:r=>r.t.ab},
+  {k:"np",   n:"投球数", v:r=>r.t.np, f:r=>r.t.np},
+  {k:"ph",   n:"安打",   v:r=>r.t.h, f:r=>r.t.h, asc:true},
+  {k:"phr",  n:"本塁打", v:r=>r.t.hr, f:r=>r.t.hr, asc:true},
+  {k:"pbb",  n:"四球",   v:r=>r.t.bb, f:r=>r.t.bb, asc:true},
+  {k:"phbp", n:"死球",   v:r=>r.t.hbp, f:r=>r.t.hbp, asc:true},
+  {k:"wp",   n:"暴投",   v:r=>r.t.wp, f:r=>r.t.wp, asc:true},
+  {k:"pr",   n:"失点",   v:r=>r.t.r, f:r=>r.t.r, asc:true},
+  {k:"er",   n:"自責点", v:r=>r.t.er, f:r=>r.t.er, asc:true},
+  {k:"rk_out", n:"完全アウト", v:r=>r.r.pct.rk_out, f:r=>fpc(r.r.pct.rk_out)},
+  {k:"rk_gb",  n:"ゴロ",   v:r=>r.r.pct.rk_gb, f:r=>fpc(r.r.pct.rk_gb)},
+  {k:"rk_fb",  n:"外野フライ", v:r=>r.r.pct.rk_fb, f:r=>fpc(r.r.pct.rk_fb), asc:true},
+  {k:"rk_bb",  n:"四死球%", v:r=>r.r.pct.rk_bb, f:r=>fpc(r.r.pct.rk_bb), asc:true},
+  {k:"rk_hr",  n:"本塁打%", v:r=>r.r.pct.rk_hr, f:r=>fpc(r.r.pct.rk_hr), asc:true},
+  {k:"rk_total", n:"計", v:r=>r.r.total, f:r=>r.r.total||dash}
+];
+const colsFor = side => side==="bat" ? BAT_COLS : PIT_COLS;
+function colOf(side, k){ return colsFor(side).find(c=>c.k===k) || colsFor(side)[0]; }
+function sortRows(rows, col){
+  const NUL = col.asc ? Infinity : -Infinity;
+  rows.sort((a,b)=>{
+    const va = col.v(a), vb = col.v(b);
+    const x = (va==null||!isFinite(va)) ? NUL : va, y = (vb==null||!isFinite(vb)) ? NUL : vb;
+    return col.asc ? x-y : y-x;
+  });
+}
+function tableHTML(cols, rows){
+  let h = `<div class="card"><div class="tablewrap"><table><thead><tr><th>選手</th>`;
+  cols.forEach(c=>h+=`<th class="${c.k===ui.sort?"sel":""}">${c.n}</th>`);
+  h += `</tr></thead><tbody>`;
+  rows.forEach(r=>{
+    h += `<tr><td>${esc(playerName(r.id))}</td>`;
+    cols.forEach(c=> h += `<td class="${c.hi && c.hi(r) ? "hi":""} ${c.k===ui.sort?"sel":""}">${c.f(r)}</td>`);
+    h += `</tr>`;
+  });
+  return h + `</tbody></table></div></div><div class="small muted" style="margin:6px 2px">横にスクロールすると全項目が見られます。緑は優秀ライン到達。</div>`;
+}
+
+/* ---------- 個別成績 ---------- */
+function renderPlayerPicker(){
+  const ps = S.players.slice().sort(byGrade);
+  let h = `<div class="card card-pad" style="padding-bottom:12px">
+    <input type="text" id="qsel" placeholder="名前・学年で検索" autocomplete="off"></div>`;
+  if(!ps.length){
+    h += `<div class="card"><div class="empty"><strong>選手がまだいません</strong>「編集」タブから選手を登録してください。<br>
+      <button class="btn ghost" data-act="goEdit" style="margin-top:12px">編集タブへ</button></div></div>`;
+  }else{
+    h += `<div class="card" id="pickList">` + ps.map(p=>`
+      <button class="list-item" data-act="pickPlayer" data-id="${p.id}" data-name="${esc(searchKey(p))}">
+        ${badgeHTML(p)}
+        <span class="li-main"><span class="li-name">${esc(p.name)}</span>
+          <span class="li-sub">${p.bats?"打者":""}${p.bats&&p.pitches?" ・ ":""}${p.pitches?"投手":""}</span></span>
+        <span class="muted">›</span></button>`).join("") +
+      `<div class="empty small" data-none style="display:none">見つかりませんでした</div></div>`;
+  }
+  view.innerHTML = h;
+}
+function searchKey(p){
+  return (gradeTag(p) + " " + p.name).toLowerCase().replace(/[\s　]/g,"");
+}
+function renderPlayerPage(){
+  const p = playerOf(ui.playerId);
+  if(!p){ ui.playerId = null; return renderPlayerPicker(); }
+  if(ui.pside==="bat" && !p.bats) ui.pside = "pit";
+  if(ui.pside==="pit" && !p.pitches) ui.pside = "bat";
+  const games = periodGames();
+  const rs = rowsFor(ui.pside, ui.playerId, games);
+
+  const fromStats = ui.playerFrom === "stats";
+  let h = `<div class="spread" style="margin-bottom:12px">
+    <button class="chip" data-act="${fromStats?"backStats":"backPicker"}">‹ ${fromStats?"成績一覧":"選手一覧"}</button>
+    <div class="scroll-x" style="gap:7px">${chip("team","all","A・B")}${chip("team","A","A")}${chip("team","B","B")}</div></div>`;
+  h += `<div class="card card-pad spread" style="align-items:flex-start">
+    <div><div style="font-weight:600;font-size:18px">${esc(p.name)}</div>
+      <div class="small muted">${teamLabel()}・${periodLabel()}・${rs.length}試合</div></div>
+    <span class="jersey gr ${gradeCls(p)}">${gradeTag(p)}</span></div>`;
+  {
+    const fm = formOf(ui.pside, p.id);
+    const arrow = v => v==null ? "—" : (v>0?"＋":"") + v.toFixed(1);
+    h += fm
+      ? `<div class="formline"><span class="e">${faceHTML(fm.key, 40)}</span>
+          <span class="fl-badge" style="background:${fm.color}"></span>
+          <span><span class="t" style="color:${fm.color}">今の調子: ${fm.label}</span>
+          <span class="small muted" style="display:block">${recentLabel(fm.side, fm.games)}で判定　自分比 ${arrow(fm.self)}／チーム内 ${arrow(fm.abs)}</span></span></div>`
+      : `<div class="formline"><span class="e" style="font-size:20px;color:var(--muted)">･･</span><span><span class="t">調子はまだ判定できません</span>
+          <span class="small muted" style="display:block">${ui.pside==="bat"?"直近6試合":"直近30日の登板"}が少ないうちは表示されません</span></span></div>`;
+  }
+  h += `<div class="scroll-x" style="margin-bottom:10px">
+    ${chip("period","all","全期間")}${chip("period","d30","直近30日")}${chip("period","last6","直近6試合")}${chip("period","custom","期間指定")}</div>`;
+  if(ui.period==="custom"){
+    h += `<div class="card card-pad row" style="gap:8px">
+      <input type="date" id="fromD" value="${ui.from}"><span class="muted">〜</span><input type="date" id="toD" value="${ui.to}"></div>`;
+  }
+  if(p.bats && p.pitches){
+    h += `<div class="scroll-x" style="margin-bottom:10px">
+      <button class="chip ${ui.pside==="bat"?"on":""}" data-act="pside" data-v="bat">打者成績</button>
+      <button class="chip ${ui.pside==="pit"?"on":""}" data-act="pside" data-v="pit">投手成績</button></div>`;
+  }
+
+  if(!rs.length){
+    h += `<div class="card"><div class="empty"><strong>この条件の記録はありません</strong>チームや期間を変えるか、「試合」タブから成績を入力してください。</div></div>`;
+    view.innerHTML = h; return;
+  }
+
+  if(ui.pside==="bat"){
+    const t = sumBat(rs), d = batDerive(t);
+    h += `<div class="card"><div class="statgrid">
+      ${statCell("打率","avg",d.avg,f3)}${statCell("出塁率",null,d.obp,f3)}${statCell("長打率",null,d.slg,f3)}
+      ${statCell("OPS","ops",d.ops,f3)}${statCell("ISO","iso",d.iso,f3)}${statCell("BB/K","bbk",d.bbk,f2)}
+    </div></div>`;
+    h += `<div class="card card-pad"><div class="row small num" style="flex-wrap:wrap;gap:12px">
+      <span>${d.pa}打席</span><span>${t.ab}打数</span><span>${t.h}安打</span><span>${t.d2}二塁打</span>
+      <span>${t.d3}三塁打</span><span>${t.hr}本塁打</span><span>${d.tb}塁打</span><span>${t.rbi}打点</span>
+      <span>${t.r}得点</span><span>${t.bb}四球</span><span>${t.hbp}死球</span><span>${t.so}三振</span>
+      <span>${t.sh}犠打</span><span>${t.sf}犠飛</span><span>盗塁${t.sb}/${t.sb+t.cs}</span>
+    </div></div>`;
+    h += `<div class="sec-label">試合ごと</div><div class="card"><div class="tablewrap"><table>
+      <thead><tr><th>試合</th><th>打席</th><th>打数</th><th>安打</th><th>本</th><th>点</th><th>四死</th><th>三振</th><th>打率</th></tr></thead><tbody>` +
+      rs.map(r=>{ const tt=sumBat([r]), dd=batDerive(tt);
+        return `<tr><td>${jp(r._g.date)}${r._g.team?" ["+r._g.team+"]":""} ${esc(gameLabel(r._g))}</td><td>${dd.pa}</td><td>${tt.ab}</td><td>${tt.h}</td>
+        <td>${tt.hr}</td><td>${tt.rbi}</td><td>${tt.bb+tt.hbp}</td><td>${tt.so}</td><td>${f3(dd.avg)}</td></tr>`;
+      }).join("") + `</tbody></table></div></div>`;
+  }else{
+    const t = sumPit(rs), d = pitDerive(t);
+    h += `<div class="card"><div class="statgrid">
+      ${statCell("防御率","era",d.era,f2)}${statCell("WHIP","whip",d.whip,f2)}${statCell("K/BB","kbb",d.kbb,f2)}
+      <div class="stat"><div class="k">IP</div><div class="v">${fip(t.outs)}</div></div>
+      <div class="stat"><div class="k">K%</div><div class="v">${fpc(d.kpct)}</div></div>
+      <div class="stat"><div class="k">MAX</div><div class="v">${t.velo||dash}</div></div>
+    </div></div>`;
+    h += `<div class="card card-pad"><div class="row small num" style="flex-wrap:wrap;gap:12px">
+      <span>${t.g}試合</span><span>${t.bf}打者</span><span>${t.np}球</span><span>${t.h}安打</span><span>${t.hr}被本塁打</span>
+      <span>${t.bb}四球</span><span>${t.hbp}死球</span><span>${t.so}三振</span><span>${t.wp}暴投</span>
+      <span>${t.r}失点</span><span>${t.er}自責点</span>
+    </div></div>`;
+    const rk = riskDerive(t);
+    h += `<div class="sec-label">リスク管理</div><div class="card card-pad">
+      ${riskBar(t, true)}${riskVerdict(rk)}
+      ${rk.total ? "" : `<div class="small muted" style="margin-top:8px">「試合」タブの投手成績入力から、結果のパターンを入力すると表示されます。</div>`}</div>`;
+    if(rk.total){
+      h += `<div class="card"><div class="tablewrap"><table>
+        <thead><tr><th>試合</th>${RISK_FIELDS.map(f=>`<th>${f.short}</th>`).join("")}<th>計</th><th>完全+ゴロ</th></tr></thead><tbody>` +
+        rs.map(r=>{ const tt=sumPit([r]), dd=riskDerive(tt);
+          return `<tr><td>${jp(r._g.date)}${r._g.team?" ["+r._g.team+"]":""} ${esc(gameLabel(r._g))}</td>` +
+            RISK_FIELDS.map(f=>`<td>${tt[f.k]||0}</td>`).join("") +
+            `<td>${dd.total}</td><td class="${dd.core!=null&&dd.core>=RISK_LINE?"hi":""}">${fpc(dd.core)}</td></tr>`;
+        }).join("") + `</tbody></table></div></div>`;
+    }
+    h += `<div class="sec-label">試合ごと</div><div class="card"><div class="tablewrap"><table>
+      <thead><tr><th>試合</th><th>回</th><th>球数</th><th>安打</th><th>四死</th><th>三振</th><th>失点</th><th>自責</th><th>防御率</th><th>最高球速</th></tr></thead><tbody>` +
+      rs.map(r=>{ const tt=sumPit([r]), dd=pitDerive(tt);
+        return `<tr><td>${jp(r._g.date)}${r._g.team?" ["+r._g.team+"]":""} ${esc(gameLabel(r._g))}</td><td>${fip(tt.outs)}</td><td>${tt.np}</td><td>${tt.h}</td>
+        <td>${tt.bb+tt.hbp}</td><td>${tt.so}</td><td>${tt.r}</td><td>${tt.er}</td><td>${f2(dd.era)}</td><td>${tt.velo||dash}</td></tr>`;
+      }).join("") + `</tbody></table></div></div>`;
+  }
+  h += glossary(ui.pside);
+  view.innerHTML = h;
+}
+function statCell(label, key, v, fmt){
+  const good = key && isGood(key, v);
+  return `<div class="stat"><div class="k">${label}</div>
+    <div class="v ${good?"good":""}">${fmt(v)}</div>${key?gauge(key,v):""}</div>`;
+}
+
+/* ---------- 試合 ---------- */
+function renderGames(){
+  let gs = S.games.slice().sort((a,b)=> a.date<b.date?1:-1);
+  if(ui.team !== "all") gs = gs.filter(g=>(g.team||"")===ui.team);
+  let h = canEdit() ? `<button class="btn block" data-act="newGame" style="margin-bottom:12px">＋ 試合を追加</button>`
+                    : `<div class="viewbar"><b>閲覧モード</b>最新の成績を見られます。</div>`;
+  h += `<div class="spread" style="margin-bottom:10px">
+    <div class="scroll-x" style="gap:7px">${chip("team","all","A・B合計")}${chip("team","A","A")}${chip("team","B","B")}</div>
+    <span class="tgl">
+      <button class="${ui.gview!=="cal"?"on":""}" data-act="setGview" data-v="list">一覧</button>
+      <button class="${ui.gview==="cal"?"on":""}" data-act="setGview" data-v="cal">日程表</button>
+    </span></div>`;
+  if(ui.gview === "cal"){
+    view.innerHTML = h + calendarHTML(gs);
+    return;
+  }
+  if(!gs.length){
+    h += `<div class="card"><div class="empty"><strong>試合がまだありません</strong>日付・対戦相手・A/Bと最終スコアを登録すると、その試合の成績を入力できます。</div></div>`;
+  }else{
+    const rec = record(gs);
+    h += `<div class="card card-pad spread" style="padding-top:11px;padding-bottom:11px">
+      <span class="small muted">${teamLabel()}・${gs.length}試合</span>
+      <span class="num" style="font-size:15px;font-weight:600">${rec.w}勝 ${rec.l}敗 ${rec.d}分</span></div>`;
+    h += `<div class="card">` + gs.map(g=>{
+      const nb = Object.keys(S.bat[g.id]||{}).length, np = Object.keys(S.pit[g.id]||{}).length;
+      return `<button class="list-item" data-act="openGame" data-id="${g.id}">
+        <span class="jersey dim num" style="font-size:11px">${jp(g.date)}</span>
+        <span class="li-main"><span class="li-name">${teamTag(g)} ${esc(gameLabel(g))}</span>
+          <span class="li-sub">${esc(g.venue||"")}${g.venue?" ・ ":""}打者${nb}名 / 投手${np}名</span></span>
+        ${hasScore(g) ? `<span class="li-val"><span class="b num">${scoreText(g)}</span><span class="s">${resultTag(g)}</span></span>`
+                      : `<span class="badge">スコア未入力</span>`}
+        <span class="muted">›</span></button>`;
+    }).join("") + `</div>`;
+  }
+  view.innerHTML = h;
+}
+function calendarHTML(gs){
+  const months = Array.from(new Set(gs.map(g=>g.date.slice(0,7)))).sort();
+  if(!months.length){
+    return `<div class="card"><div class="empty"><strong>試合がまだありません</strong>「一覧」に切り替えて試合を追加してください。</div></div>`;
+  }
+  if(!ui.calMonth || months.indexOf(ui.calMonth) < 0) ui.calMonth = months[months.length-1];
+  const idx = months.indexOf(ui.calMonth);
+  const [y, m] = ui.calMonth.split("-").map(Number);
+  const first = new Date(y, m-1, 1);
+  const days = new Date(y, m, 0).getDate();
+  const lead = (first.getDay() + 6) % 7;      /* 月曜はじまり */
+  const byDay = {};
+  gs.forEach(g=>{ if(g.date.slice(0,7)===ui.calMonth) (byDay[+g.date.slice(8,10)] = byDay[+g.date.slice(8,10)] || []).push(g); });
+
+  let h = `<div class="spread" style="margin:2px 2px 10px">
+    <button class="chip" data-act="calMove" data-v="-1" ${idx<=0?"disabled":""}>‹</button>
+    <span style="font-weight:600;font-size:15px">${y}年${m}月</span>
+    <button class="chip" data-act="calMove" data-v="1" ${idx>=months.length-1?"disabled":""}>›</button></div>`;
+  h += `<div class="card" style="overflow:hidden"><div class="cal-head">` +
+    ["月","火","水","木","金","土","日"].map((d,i)=>`<span class="${i===5?"sat":i===6?"sun":""}">${d}</span>`).join("") +
+    `</div><div class="cal-grid">`;
+  for(let i=0;i<lead;i++) h += `<div class="cal-cell empty-cell"></div>`;
+  for(let d=1; d<=days; d++){
+    const list = byDay[d] || [];
+    const dow = (new Date(y, m-1, d).getDay() + 6) % 7;
+    h += `<div class="cal-cell"><span class="cal-d ${dow===5?"sat":dow===6?"sun":""}">${d}</span>`;
+    list.forEach(g=>{
+      const n = Object.keys(S.bat[g.id]||{}).length + Object.keys(S.pit[g.id]||{}).length;
+      const r = gameResult(g);
+      h += `<button class="calg ${r||""}" data-act="openGame" data-id="${g.id}">
+        <span class="op">${g.team?`<i class="tm">${g.team}</i>`:""}${esc(gameLabel(g))}</span>
+        ${hasScore(g) ? `<span class="sc">${r==="win"?"○":r==="lose"?"●":"△"} ${scoreText(g)}</span>` : `<span class="sc muted">未入力</span>`}
+        <span class="pl">${n}名</span></button>`;
+    });
+    h += `</div>`;
+  }
+  const tail = (7 - ((lead + days) % 7)) % 7;
+  for(let i=0;i<tail;i++) h += `<div class="cal-cell empty-cell"></div>`;
+  h += `</div></div>`;
+  const rec = record(gs.filter(g=>g.date.slice(0,7)===ui.calMonth));
+  h += `<div class="card card-pad spread" style="padding-top:11px;padding-bottom:11px">
+    <span class="small muted">${y}年${m}月・${(byDay && Object.values(byDay).reduce((a,l)=>a+l.length,0))}試合</span>
+    <span class="num" style="font-size:15px;font-weight:600">${rec.w}勝 ${rec.l}敗 ${rec.d}分</span></div>`;
+  return h;
+}
+function renderGameDetail(){
+  const g = S.games.find(x=>x.id===ui.gameId);
+  if(!g){ ui.gameId=null; return renderGames(); }
+  const bat = S.bat[g.id]||{}, pit = S.pit[g.id]||{};
+  const ro = !canEdit();
+  let h = `<button class="chip" data-act="backGames" style="margin-bottom:12px">‹ 試合一覧</button>`;
+  h += `<div class="card card-pad spread">
+    <div><div class="num small muted">${g.date}</div>
+      <div style="font-weight:600;font-size:16px">${teamTag(g)} ${esc(gameLabel(g))}</div>
+      <div class="small muted">${esc(g.venue||"")}</div>
+      ${hasScore(g) ? `<div class="num" style="font-size:21px;font-weight:600;margin-top:6px">${scoreText(g)} ${resultTag(g)}</div>`
+                    : `<div class="small muted" style="margin-top:6px">スコア未入力（「編集」から入れられます）</div>`}</div>
+    ${ro?"":`<button class="btn line" data-act="editGame">編集</button>`}</div>`;
+
+  const batters = S.players.filter(p=>p.bats && p.active!==false);
+  const pitchers = S.players.filter(p=>p.pitches && p.active!==false);
+  const doneB = batters.filter(p=>bat[p.id]), restB = batters.filter(p=>!bat[p.id]);
+  const doneP = pitchers.filter(p=>pit[p.id]), restP = pitchers.filter(p=>!pit[p.id]);
+
+  if(!S.players.length){
+    h += `<div class="card"><div class="empty"><strong>選手がまだ登録されていません</strong>
+      成績を入力するには、先に名簿が必要です。編集タブの「＋ 選手を登録」から追加してください。<br>
+      <button class="btn ghost" data-act="goEdit" style="margin-top:12px">編集タブへ</button></div></div>`;
+    view.innerHTML = h; return;
+  }
+
+  h += `<div class="sec-label">打者成績</div><div class="card">`;
+  if(!batters.length) h += `<div class="empty small">打者として登録された選手がいません。編集タブで選手の区分（打／投）を確認してください。</div>`;
+  else if(!doneB.length) h += `<div class="empty small">下の「選手を選んで入力」から追加します。</div>`;
+  h += doneB.map(p=>{
+    const t = sumBat([bat[p.id]]), d = batDerive(t);
+    return `<button class="list-item" data-act="editBat" data-id="${p.id}">
+      ${badgeHTML(p,"bat")}
+      <span class="li-main"><span class="li-name">${esc(p.name)}</span>
+        <span class="li-sub num">${t.ab}打数${t.h}安打 ${t.hr?t.hr+"本 ":""}${t.rbi}打点 ${t.bb+t.hbp}四死球 ${t.so}三振</span></span>
+      <span class="li-val"><span class="b">${f3(d.avg)}</span><span class="s">AVG</span></span></button>`;
+  }).join("");
+  h += `</div>`;
+  h += (restB.length && !ro) ? `<details class="card" ${doneB.length?"":"open"}><summary class="card-pad" style="cursor:pointer;font-size:13.5px;color:var(--accent-deep);font-weight:600">選手を選んで入力（未入力 ${restB.length}名）</summary>
+    <div class="card-pad" style="padding-top:0"><input type="text" id="qb" placeholder="名前・学年で検索" autocomplete="off"></div>
+    ${restB.map(p=>`<button class="list-item" data-act="editBat" data-id="${p.id}" data-name="${esc(searchKey(p))}">
+      <span class="jersey gr ${gradeCls(p)}" style="opacity:.5">${gradeTag(p)}</span><span class="li-main"><span class="li-name">${esc(p.name)}</span></span>
+      <span class="muted">＋</span></button>`).join("")}
+    <div class="empty small" data-none style="display:none">見つかりませんでした</div></details>` : "";
+
+  h += `<div class="sec-label">投手成績</div><div class="card">`;
+  if(!pitchers.length) h += `<div class="empty small">投手として登録された選手がいません。編集タブで選手の区分（打／投）を確認してください。</div>`;
+  else if(!doneP.length) h += `<div class="empty small">下の「選手を選んで入力」から追加します。</div>`;
+  h += doneP.map(p=>{
+    const t = sumPit([pit[p.id]]), d = pitDerive(t);
+    return `<button class="list-item" data-act="editPit" data-id="${p.id}">
+      ${badgeHTML(p,"pit")}
+      <span class="li-main"><span class="li-name">${esc(p.name)}</span>
+        <span class="li-sub num">${fip(t.outs)}回 ${t.np}球 ${t.h}安打 ${t.so}三振 ${t.er}自責${t.velo?" MAX"+t.velo:""}${riskDerive(t).total?" ・ 完全+ゴロ "+fpc(riskDerive(t).core):""}</span></span>
+      <span class="li-val"><span class="b">${f2(d.era)}</span><span class="s">ERA</span></span></button>`;
+  }).join("");
+  h += `</div>`;
+  h += (restP.length && !ro) ? `<details class="card" ${doneP.length?"":"open"}><summary class="card-pad" style="cursor:pointer;font-size:13.5px;color:var(--accent-deep);font-weight:600">選手を選んで入力（未入力 ${restP.length}名）</summary>
+    <div class="card-pad" style="padding-top:0"><input type="text" id="qp" placeholder="名前・学年で検索" autocomplete="off"></div>
+    ${restP.map(p=>`<button class="list-item" data-act="editPit" data-id="${p.id}" data-name="${esc(searchKey(p))}">
+      <span class="jersey gr ${gradeCls(p)}" style="opacity:.5">${gradeTag(p)}</span><span class="li-main"><span class="li-name">${esc(p.name)}</span></span>
+      <span class="muted">＋</span></button>`).join("")}
+    <div class="empty small" data-none style="display:none">見つかりませんでした</div></details>` : "";
+
+  if(!ro) h += `<button class="btn danger block" data-act="delGame" style="margin-top:18px">この試合を削除</button>`;
+  view.innerHTML = h;
+}
+
+/* ---------- 成績入力シート ---------- */
+let sheetState = null;
+function openBatSheet(gameId, pid){
+  const cur = (S.bat[gameId]||{})[pid];
+  sheetState = {type:"bat", gameId, pid, v: Object.assign(emptyBat(), cur||{})};
+  drawBatSheet();
+}
+function drawBatSheet(){
+  const {v, pid} = sheetState;
+  const t = sumBat([v]), d = batDerive(t);
+  const bad = (v.d2+v.d3+v.hr) > v.h || v.h > v.ab;
+  let b = "";
+  b += `<div class="derived">
+    <div>打席<b>${d.pa}</b></div><div>単打<b>${d.single}</b></div><div>塁打<b>${d.tb}</b></div>
+    <div>打率<b>${f3(d.avg)}</b></div><div>OPS<b>${f3(d.ops)}</b></div></div>`;
+  if(bad) b += `<div class="err">安打より長打が多い、または打数より安打が多い状態です。数値を確認してください。</div>`;
+  b += `<div class="fields">` + BAT_FIELDS.map(f=>stepperHTML(f.k,f.n,v[f.k])).join("") + `</div>`;
+  b += `<div class="small muted" style="margin-top:12px">打席・単打・塁打・打率・出塁率・長打率・OPS・ISO は入力値から自動計算されます。</div>`;
+  const foot = `<button class="btn line" data-act="delEntry">削除</button><button class="btn" data-act="saveEntry" ${bad?"disabled":""}>保存</button>`;
+  openSheet(`${playerName(pid)}・打者成績`, b, foot, sheetState.drawn);
+  sheetState.drawn = true;
+}
+function openPitSheet(gameId, pid){
+  const cur = (S.pit[gameId]||{})[pid];
+  sheetState = {type:"pit", gameId, pid, v: Object.assign(emptyPit(), cur||{})};
+  drawPitSheet();
+}
+function drawPitSheet(){
+  const {v, pid} = sheetState;
+  const t = sumPit([v]), d = pitDerive(t);
+  const whole = Math.floor(v.outs/3), rem = v.outs%3;
+  let b = "";
+  b += `<div class="derived">
+    <div>投球回<b>${fip(v.outs)}</b></div><div>防御率<b>${f2(d.era)}</b></div>
+    <div>WHIP<b>${f2(d.whip)}</b></div><div>K%<b>${fpc(d.kpct)}</b></div></div>`;
+  b += `<div class="f" style="margin-bottom:9px"><span>投球回（イニング）</span>
+    <div class="stepper"><button data-step="-1" data-k="__ip">−</button>
+    <input type="number" inputmode="numeric" data-k="__ip" value="${whole}"><button data-step="1" data-k="__ip">＋</button></div>
+    <span style="margin:8px 0 5px">アウト（1/3単位）</span>
+    <div class="seg">${[0,1,2].map(n=>`<button data-act="outs" data-v="${n}" class="${rem===n?"on":""}">${n?n+"/3":"0"}</button>`).join("")}</div></div>`;
+  b += `<div class="fields">` + PIT_FIELDS.map(f=>stepperHTML(f.k,f.n,v[f.k])).join("") +
+       stepperHTML("velo","最高球速 km/h", v.velo) + `</div>`;
+  b += `<div class="small muted" style="margin-top:12px">防御率・WHIP・K%・K/BB は自動計算です。WHIPは（安打＋四球＋死球）÷投球回で算出しています。</div>`;
+
+  const rd = riskDerive(v);
+  b += `<div class="sec-label">リスク管理</div>`;
+  b += `<div class="card card-pad">
+    <div class="small muted" style="margin-bottom:10px">この投手が投げているときに起きた結果を、打者1人ずつ数えて入力します。完全アウトは内野フライと三振です。</div>
+    ${riskBar(v, true)}
+    ${rd.total ? riskVerdict(rd) : ""}
+    <div class="fields" style="margin-top:12px">` +
+      RISK_FIELDS.map(f=>stepperHTML(f.k, f.n + (f.hint?"（"+f.hint+"）":""), v[f.k])).join("") +
+    `</div>
+    <div class="spread" style="margin-top:10px">
+      <span class="small muted num">計 ${rd.total}</span>
+      <button class="chip" data-act="riskFill">四死球・本塁打を上の成績から入れる</button>
+    </div></div>`;
+  const foot = `<button class="btn line" data-act="delEntry">削除</button><button class="btn" data-act="saveEntry">保存</button>`;
+  openSheet(`${playerName(pid)}・投手成績`, b, foot, sheetState.drawn);
+  sheetState.drawn = true;
+}
+function stepperHTML(k,label,val){
+  return `<div class="f"><span>${label}</span><div class="stepper">
+    <button data-step="-1" data-k="${k}">−</button>
+    <input type="number" inputmode="numeric" data-k="${k}" value="${val||0}">
+    <button data-step="1" data-k="${k}">＋</button></div></div>`;
+}
+function saveEntry(){
+  const {type, gameId, pid, v} = sheetState;
+  const bag = type==="bat" ? S.bat : S.pit;
+  if(!bag[gameId]) bag[gameId] = {};
+  bag[gameId][pid] = v;
+  persist(); closeSheet(); render(); toast("保存しました");
+}
+function delEntry(){
+  const {type, gameId, pid} = sheetState;
+  const bag = type==="bat" ? S.bat : S.pit;
+  if(bag[gameId]) delete bag[gameId][pid];
+  persist(); closeSheet(); render(); toast("削除しました");
+}
+
+/* ---------- 試合フォーム ---------- */
+function gameForm(g){
+  const isNew = !g;
+  const v = g || {date:new Date().toISOString().slice(0,10), opponent:"", venue:"", team:ui.gteam, rs:"", ra:""};
+  ui.gteam = v.team || "A";
+  const b = `<div class="field"><span style="display:block;font-size:12px;color:var(--muted);margin-bottom:5px">どちらの試合か</span>
+      <div class="seg"><button data-act="gteam" data-v="A" class="${ui.gteam==="A"?"on":""}">Aチーム</button>
+      <button data-act="gteam" data-v="B" class="${ui.gteam==="B"?"on":""}">Bチーム</button></div></div>
+    <label class="field"><span>日付</span><input type="date" id="gDate" value="${v.date}"></label>
+    <label class="field"><span>対戦相手</span><input type="text" id="gOpp" value="${esc(v.opponent)}" placeholder="○○大学"></label>
+    <label class="field"><span>球場・メモ</span><input type="text" id="gVen" value="${esc(v.venue||"")}" placeholder="富士見グラウンド"></label>
+    <div class="field"><span style="display:block;font-size:12px;color:var(--muted);margin-bottom:5px">最終スコア（分かってから入れてもOK）</span>
+      <div class="row" style="gap:10px;align-items:center">
+        <label style="flex:1"><span class="small muted" style="display:block;margin-bottom:4px">立教</span>
+          <input type="number" inputmode="numeric" id="gRs" value="${v.rs ?? ""}" placeholder="-" style="text-align:center;font-family:var(--font-num);font-size:19px"></label>
+        <span class="muted" style="padding-top:18px">－</span>
+        <label style="flex:1"><span class="small muted" style="display:block;margin-bottom:4px">相手</span>
+          <input type="number" inputmode="numeric" id="gRa" value="${v.ra ?? ""}" placeholder="-" style="text-align:center;font-family:var(--font-num);font-size:19px"></label>
+      </div></div>`;
+  openSheet(isNew ? "試合を追加" : "試合を編集", b,
+    `<button class="btn block" data-act="${isNew?"createGame":"updateGame"}">${isNew?"追加する":"保存"}</button>`);
+}
+
+/* ---------- 編集：選手 ---------- */
+function playersSection(){
+  let h = `<div class="sec-label">選手</div>`;
+  h += `<button class="btn block" data-act="newPlayer" style="margin-bottom:10px">＋ 選手を登録</button>`;
+  const ps = S.players.slice().sort(byGrade);
+  if(!ps.length){
+    return h + `<div class="card"><div class="empty"><strong>選手がまだいません</strong>上の「＋ 選手を登録」から、学年・名前・区分を追加してください。</div></div>`;
+  }
+  h += `<div class="card card-pad" style="padding-bottom:12px">
+    <input type="text" id="qedit" placeholder="名前・学年で検索（${ps.length}名）" autocomplete="off"></div>`;
+  h += `<div class="card" id="editList">` + ps.map(p=>`
+    <button class="list-item" data-act="editPlayer" data-id="${p.id}" data-name="${esc(searchKey(p))}">
+      <span class="jersey gr ${gradeCls(p)} ${p.active===false?"dim":""}">${gradeTag(p)}</span>
+      <span class="li-main"><span class="li-name">${esc(p.name)}</span>
+        <span class="li-sub">${p.bats?"打者":""}${p.bats&&p.pitches?" ・ ":""}${p.pitches?"投手":""}${p.active===false?" ・ 非表示":""}</span></span>
+      <span class="muted">›</span></button>`).join("") +
+    `<div class="empty small" data-none style="display:none">見つかりませんでした</div></div>`;
+  return h;
+}
+let editingPlayer = null;
+function playerForm(p){
+  editingPlayer = p || null;
+  const v = p || {grade:"", name:"", bats:true, pitches:false, active:true};
+  const b = `<div class="field"><span style="display:block;font-size:12px;color:var(--muted);margin-bottom:5px">学年</span>
+      <div class="seg">${["1","2","3","4"].map(n=>`<button data-act="pgrade" data-v="${n}" class="${v.grade===n?"on":""}">${n}年</button>`).join("")}
+      <button data-act="pgrade" data-v="" class="${!v.grade?"on":""}">未設定</button></div></div>
+    <label class="field"><span>名前</span><input type="text" id="pName" value="${esc(v.name)}" placeholder="道本"></label>
+    <div class="field"><span style="display:block;font-size:12px;color:var(--muted);margin-bottom:5px">区分（両方選択できます）</span>
+      <div class="seg"><button data-act="tog" data-k="bats" class="${v.bats?"on":""}">打者</button>
+      <button data-act="tog" data-k="pitches" class="${v.pitches?"on":""}">投手</button></div></div>
+    <div class="field"><span style="display:block;font-size:12px;color:var(--muted);margin-bottom:5px">表示</span>
+      <div class="seg"><button data-act="tog" data-k="active" class="${v.active!==false?"on":""}">入力画面に表示する</button></div></div>`;
+  formState = {grade:v.grade||"", name:v.name, bats:!!v.bats, pitches:!!v.pitches, active:v.active!==false};
+  openSheet(p?"選手を編集":"選手を登録", b,
+    (p?`<button class="btn danger" data-act="delPlayer">削除</button>`:"") +
+    `<button class="btn" data-act="savePlayer">保存</button>`);
+}
+let formState = null;
+
+/* ---------- データ ---------- */
+function secretField(id, label, value, note, ph){
+  return `<div class="field"><span style="display:block;font-size:12px;color:var(--muted);margin-bottom:5px">${label}</span>
+    <div class="row" style="gap:8px">
+      <input type="password" id="${id}" value="${esc(value||"")}" placeholder="${esc(ph||"")}" autocomplete="off" style="flex:1">
+      <button class="chip" data-act="peek" data-v="${id}" style="flex:0 0 auto">表示</button>
+    </div>
+    ${note?`<div class="small muted" style="margin-top:5px">${note}</div>`:""}</div>`;
+}
+function shareSection(){
+  let h = `<div class="sec-label">共有の設定</div><div class="card card-pad">`;
+  h += secretField("cPass", "閲覧合言葉（データの暗号鍵・部員全員に伝える）", conn.pass,
+    "アプリを開くたびに入力してもらう言葉です。変更すると次の送信から新しい合言葉で暗号化されます。", "部内で決めた合言葉");
+  h += `<div class="row" style="gap:8px;flex-wrap:wrap;margin-top:4px">
+      <button class="btn" data-act="connSave">保存する</button>
+      <button class="btn ghost" data-act="pushNow">今すぐ送信（この端末の内容を反映）</button>
+    </div>
+    <div class="row" style="gap:8px;flex-wrap:wrap;margin-top:8px">
+      <button class="chip" data-act="connTest">接続テスト</button>
+      <button class="chip" data-act="pullNow">最新を読み込む（手元の未送信分は消えます）</button>
+    </div>
+    <div id="connResult"></div>`;
+  h += `<details style="margin-top:14px"><summary class="small muted" style="cursor:pointer">接続先を手動で設定する（通常は不要）</summary>
+    <div style="margin-top:10px">
+      <label class="field"><span>GitHubユーザー名</span><input type="text" id="cOwner" value="${esc(conn.owner)}" autocomplete="off"></label>
+      <label class="field"><span>リポジトリ名</span><input type="text" id="cRepo" value="${esc(conn.repo)}" autocomplete="off"></label>
+      <div class="row" style="gap:8px">
+        <label class="field" style="flex:1"><span>ブランチ</span><input type="text" id="cBranch" value="${esc(conn.branch)}"></label>
+        <label class="field" style="flex:1"><span>ファイル名</span><input type="text" id="cPath" value="${esc(conn.path)}"></label>
+      </div>
+    </div></details>`;
+  h += `</div>`;
+
+  h += `<div class="sec-label">編集モードの鍵</div><div class="card card-pad">
+    <div class="small muted" style="margin-bottom:12px">編集用トークンはパスキーで暗号化して共有ファイルに入っています。
+      端末には残らないので、どの端末でもパスキーだけで編集モードに入れます。
+      パスキーや復旧用パスワードを変えるときは、下に入力して保存してください。</div>
+    <label class="field"><span>編集用トークン（作り直したときだけ入力）</span>
+      <input type="password" id="auToken" placeholder="変えないなら空のまま" autocomplete="off"></label>
+    <label class="field"><span>新しい編集用パスキー</span><input type="password" id="auKey" placeholder="変えないなら空のまま" autocomplete="off"></label>
+    <label class="field"><span>新しい復旧用パスワード</span><input type="password" id="auRec" placeholder="変えないなら空のまま" autocomplete="off"></label>
+    <button class="btn block" data-act="authSetup">鍵を更新する</button>
+    <div class="small muted" style="margin-top:10px">現在: ${hasAuth() ? "設定済み" : "未設定"}${S.auth&&S.auth.recBox?"・復旧用パスワードあり":""}</div>
+  </div>`;
+  return h;
+}
+function renderEdit(){
+  const nb = Object.values(S.bat).reduce((a,o)=>a+Object.keys(o).length,0);
+  const np = Object.values(S.pit).reduce((a,o)=>a+Object.keys(o).length,0);
+  if(!canEdit()){
+    if(hasAuth()){
+      view.innerHTML = `<div class="card card-pad" style="margin-top:24px;text-align:center">
+        <div style="font-size:30px">🔑</div>
+        <div style="font-weight:600;font-size:16px;margin:8px 0 4px">編集用パスキーを入力してください</div>
+        <div class="small muted" style="margin-bottom:16px">選手・試合の編集ができるのは、パスキーを知っている人だけです。</div>
+        ${editMsg?`<div class="err">${esc(editMsg)}</div>`:""}
+        <input type="password" id="editKey" placeholder="編集用パスキー" autocomplete="off" style="text-align:center;margin-bottom:10px">
+        <button class="btn block" data-act="editUnlock">編集モードにする</button>
+        <div class="small muted" style="margin-top:14px">アプリを開き直すたびに必要になります。</div>
+        <details style="margin-top:16px;text-align:left">
+          <summary class="small muted" style="cursor:pointer;text-align:center">パスキーを忘れた・トークンを作り直した場合</summary>
+          <div style="margin-top:12px">
+            <div class="small muted" style="margin-bottom:10px">復旧用パスワードを知っている人だけが、パスキーを付け直せます。</div>
+            <label class="field"><span>復旧用パスワード</span><input type="password" id="rcPass" autocomplete="off"></label>
+            <label class="field"><span>新しい編集用パスキー</span><input type="password" id="rcNew" autocomplete="off"></label>
+            <label class="field"><span>新しい編集用トークン（作り直した場合だけ）</span>
+              <input type="password" id="rcToken" placeholder="変えないなら空のまま" autocomplete="off"></label>
+            <button class="btn ghost block" data-act="authRecover">編集モードを取り戻す</button>
+          </div>
+        </details>
+      </div>`;
+    }else{
+      view.innerHTML = `<div class="card card-pad" style="margin-top:24px">
+        <div style="font-weight:600;font-size:16px;margin-bottom:4px">編集モードの鍵をつくります</div>
+        <div class="small muted" style="margin-bottom:14px">最初の1回だけ、GitHubの編集用トークンを登録します。
+          トークンはパスキーで暗号化されて共有ファイルに入り、以降どの端末でもパスキーだけで編集できるようになります。
+          端末にトークンが残ることはありません。</div>
+        ${editMsg?`<div class="err">${esc(editMsg)}</div>`:""}
+        <label class="field"><span>編集用トークン</span><input type="password" id="auToken" value="${esc(legacyToken)}" placeholder="github_pat_..." autocomplete="off"></label>
+        <label class="field"><span>編集用パスキー（データ班に伝える）</span><input type="password" id="auKey" autocomplete="off"></label>
+        <label class="field"><span>復旧用パスワード（パスキーを忘れたとき用・別の言葉に）</span><input type="password" id="auRec" autocomplete="off"></label>
+        <button class="btn block" data-act="authSetup">この内容で登録する</button>
+      </div>`;
+    }
+    return;
+  }
+  let h = playersSection();
+  h += shareSection();
+  h += `<div class="sec-label">データ</div>`;
+  h += `<div class="card card-pad"><div class="small muted">保存されている内容</div>
+    <div class="num" style="font-size:14px;margin-top:6px">選手 ${S.players.length}名 ・ 試合 ${S.games.length} ・ 打者記録 ${nb} ・ 投手記録 ${np}</div>
+    <div class="small muted" style="margin-top:8px">最終更新 ${S.updatedAt ? new Date(S.updatedAt).toLocaleString("ja-JP") : "不明"} ・ アプリ版 ${APP_VERSION}</div></div>`;
+
+  h += `<details class="card"><summary class="card-pad" style="cursor:pointer;font-size:13.5px;color:var(--accent-deep);font-weight:600">過去の集計成績もまとめて取り込む（任意）</summary>
+  <div class="card-pad" style="padding-top:0">
+    <div class="small muted" style="margin-bottom:10px">名簿だけで足りる場合は不要です。過去の合計値を残したいときは、成績表をCSVにして取り込むと「1件の記録」として登録され、これからの試合と合算されます。</div>
+    <div class="row" style="gap:8px;margin-bottom:10px">
+      <button class="chip ${impSide==="bat"?"on":""}" data-act="impSide" data-v="bat">打者成績</button>
+      <button class="chip ${impSide==="pit"?"on":""}" data-act="impSide" data-v="pit">投手成績</button>
+    </div>
+    <label class="field"><span>この成績をまとめる名前</span>
+      <input type="text" id="impLabel" value="${esc(impLabel)}" placeholder="2025年 春 過去集計"></label>
+    <label class="field"><span>日付</span><input type="date" id="impDate" value="${impDate}"></label>
+    <input type="file" id="impFile" accept=".csv,text/csv" style="margin-bottom:10px">
+    <label class="field"><span>または貼り付け</span><textarea id="impText" placeholder="選手,打率,打席,打数,安打数,..."></textarea></label>
+    <button class="btn block" data-act="impPreview">内容を確認する</button>
+  </div></details>`;
+
+  h += `<div class="sec-label">書き出し</div><div class="card card-pad">
+    <div class="small muted" style="margin-bottom:10px">今の期間（${periodLabel()}）の集計をCSVで書き出します。エクセルの列順に合わせています。</div>
+    <div class="row" style="gap:8px;flex-wrap:wrap">
+      <button class="btn ghost" data-act="expCsv" data-v="bat">打者CSV</button>
+      <button class="btn ghost" data-act="expCsv" data-v="pit">投手CSV</button>
+      <button class="btn line" data-act="expJson">バックアップ(JSON)</button>
+    </div>
+    <div id="outBox"></div>
+  </div>`;
+
+  h += `<div class="sec-label">復元・初期化</div><div class="card card-pad">
+    <label class="field"><span>バックアップJSONを読み込む</span><input type="file" id="impJson" accept=".json,application/json"></label>
+    <button class="btn danger block" data-act="wipe">すべてのデータを消去</button></div>`;
+
+  h += `<div class="small muted" style="margin-top:14px;padding:0 2px">データは暗号化されてGitHubに保存され、端末にも暗号化した控えが残ります。大きな変更の前や定期的に、バックアップJSONを手元に書き出しておくと安心です。</div>`;
+  view.innerHTML = h;
+
+  const f = document.getElementById("impFile");
+  if(f) f.addEventListener("change", e=>{
+    const file = e.target.files[0]; if(!file) return;
+    const r = new FileReader();
+    r.onload = () => { document.getElementById("impText").value = r.result; toast("読み込みました。内容を確認してください"); };
+    r.readAsText(file, "UTF-8");
+  });
+  const j = document.getElementById("impJson");
+  if(j) j.addEventListener("change", e=>{
+    const file = e.target.files[0]; if(!file) return;
+    const r = new FileReader();
+    r.onload = async () => {
+      let o;
+      try{
+        o = JSON.parse(r.result);
+        if(!o.players || !o.games) throw 0;
+      }catch(err){ showError("このファイルは読み込めません（バックアップのJSONを選んでください）"); return; }
+      const n = (o.games||[]).length, m = (o.players||[]).length;
+      if(!confirm(`選手${m}名・試合${n}件を復元します。今の内容は置き換わります。よろしいですか？`)) return;
+      const keepAuth = S.auth;
+      S = {players:o.players||[], games:o.games||[], bat:o.bat||{}, pit:o.pit||{}};
+      if(keepAuth) S.auth = keepAuth;               /* 編集モードの鍵は今のものを残す */
+      else if(o.auth) S.auth = o.auth;
+      S.updatedAt = Date.now();
+      render();
+      if(canSync() && conn.token){
+        try{
+          await push(true);
+          toast(`復元しました（選手${m}名・試合${n}件）`);
+        }catch(err){
+          showError("復元した内容を共有に送れませんでした。この画面を閉じないでください。原因：" + (err.message||err));
+        }
+      }else{
+        await store.save(S);
+        toast("この端末に復元しました。共有に反映するには編集用トークンが必要です");
+      }
+      render();
+    };
+    r.readAsText(file, "UTF-8");
+  });
+}
+let impSide = "bat", impLabel = "", impDate = new Date().toISOString().slice(0,10);
+
+/* ---------- CSV ---------- */
+function parseCSV(text){
+  text = text.replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n");
+  const rows = []; let row = [], cur = "", q = false;
+  for(let i=0;i<text.length;i++){
+    const c = text[i];
+    if(q){
+      if(c === '"'){ if(text[i+1] === '"'){ cur+='"'; i++; } else q = false; }
+      else cur += c;
+    }else{
+      if(c === '"') q = true;
+      else if(c === ","){ row.push(cur); cur = ""; }
+      else if(c === "\n"){ row.push(cur); rows.push(row); row = []; cur = ""; }
+      else if(c === "\t"){ row.push(cur); cur = ""; }
+      else cur += c;
+    }
+  }
+  row.push(cur); rows.push(row);
+  return rows.filter(r => r.some(c => String(c).trim() !== ""));
+}
+const BAT_ALIAS = {
+  name:["選手","選手名","名前","氏名","player"],
+  ab:["打数","AB"], h:["安打","安打数","ヒット","H"], d2:["二塁打","2B"], d3:["三塁打","3B"],
+  hr:["本塁打","HR","ホームラン"], rbi:["打点","RBI"], r:["得点","R"], so:["三振","K","SO","奪三振"],
+  bb:["四球","BB"], hbp:["死球","HBP"], sh:["犠打","犠打数","SH"], sf:["犠飛","SF"],
+  sb:["盗塁","SB"], cs:["盗塁死","CS"]
+};
+const PIT_ALIAS = {
+  name:["選手","選手名","名前","氏名","player"],
+  ip:["投球回","イニング","IP","回"], bf:["打者","対戦打者","BF","打者数"], ab:["打数","AB"],
+  np:["投球数","球数","P"], h:["安打","被安打","H"], hr:["本塁打","被本塁打","HR"],
+  bb:["四球","与四球","BB"], hbp:["死球","与死球","HBP"], so:["三振","奪三振","K","SO"],
+  wp:["暴投","WP"], r:["失点","R"], er:["自責点","自責","ER"], velo:["最高球速","球速","MAX"]
+};
+function mapHeaders(head, alias){
+  const idx = {};
+  const clean = h => String(h).replace(/\s|　/g,"").replace(/[（(].*?[)）]/g,"");
+  head.forEach((h,i)=>{
+    const c = clean(h);
+    for(const key in alias){
+      if(idx[key]!=null) continue;
+      if(alias[key].some(a => c === a)) idx[key] = i;
+    }
+  });
+  return idx;
+}
+function toNum(x){
+  if(x==null) return 0;
+  const s = String(x).replace(/[,%\s　]/g,"");
+  if(!s || /DIV|VALUE|N\/A|#/.test(s)) return 0;
+  const n = parseFloat(s);
+  return isFinite(n) ? n : 0;
+}
+function parseIP(x){
+  const s = String(x||"").trim();
+  let m = s.match(/^(\d+)\s+(\d)\/3$/);            // 17 1/3
+  if(m) return +m[1]*3 + +m[2];
+  m = s.match(/^(\d+)\.(\d)$/);                     // 17.1 / 17.2
+  if(m && +m[2] <= 2) return +m[1]*3 + +m[2];
+  const n = parseFloat(s.replace(/[^\d.]/g,""));
+  return isFinite(n) ? Math.round(n*3) : 0;
+}
+function importPreview(){
+  const text = document.getElementById("impText").value.trim();
+  impLabel = document.getElementById("impLabel").value.trim();
+  impDate = document.getElementById("impDate").value || impDate;
+  if(!text){ toast("CSVの中身が空です"); return; }
+  const rows = parseCSV(text);
+  if(rows.length < 2){ toast("見出し行とデータ行が必要です"); return; }
+  const alias = impSide==="bat" ? BAT_ALIAS : PIT_ALIAS;
+  const idx = mapHeaders(rows[0], alias);
+  if(idx.name==null){ toast("「選手」の列が見つかりません"); return; }
+  const parsed = [];
+  for(let i=1;i<rows.length;i++){
+    const r = rows[i];
+    const nm = String(r[idx.name]||"").trim();
+    if(!nm) continue;
+    const o = {name:nm};
+    if(impSide==="bat"){
+      BAT_FIELDS.forEach(f=> o[f.k] = idx[f.k]!=null ? Math.round(toNum(r[idx[f.k]])) : 0);
+    }else{
+      PIT_FIELDS.forEach(f=> o[f.k] = idx[f.k]!=null ? Math.round(toNum(r[idx[f.k]])) : 0);
+      o.outs = idx.ip!=null ? parseIP(r[idx.ip]) : 0;
+      o.velo = idx.velo!=null ? Math.round(toNum(r[idx.velo])) : 0;
+    }
+    parsed.push(o);
+  }
+  if(!parsed.length){ toast("取り込める行がありませんでした"); return; }
+  pendingImport = parsed;
+  const found = Object.keys(idx).filter(k=>k!=="name").map(k=>k).length;
+  const known = parsed.filter(p=>S.players.some(x=>x.name===p.name)).length;
+  let b = `<div class="small muted" style="margin-bottom:10px">${parsed.length}名分・${found}項目を認識しました。登録済みの選手 ${known}名、新規 ${parsed.length-known}名（新規は自動で登録します）。</div>`;
+  b += `<div class="card"><div class="tablewrap"><table><thead><tr><th>選手</th>` +
+    (impSide==="bat" ? BAT_FIELDS.map(f=>`<th>${f.n}</th>`).join("")
+                     : `<th>投球回</th>`+PIT_FIELDS.map(f=>`<th>${f.n}</th>`).join("")+`<th>球速</th>`) +
+    `</tr></thead><tbody>` +
+    parsed.map(p=>`<tr><td>${esc(p.name)}</td>` +
+      (impSide==="bat" ? BAT_FIELDS.map(f=>`<td>${p[f.k]}</td>`).join("")
+                       : `<td>${fip(p.outs)}</td>`+PIT_FIELDS.map(f=>`<td>${p[f.k]}</td>`).join("")+`<td>${p.velo||dash}</td>`) +
+      `</tr>`).join("") + `</tbody></table></div></div>`;
+  b += `<div class="small muted" style="margin-top:10px">0になっている列は、見出し名が一致しなかった項目です。見出しを「安打」「二塁打」などに直すと拾えます。</div>`;
+  openSheet("取り込み内容の確認", b, `<button class="btn line" data-act="closeSheet">やめる</button><button class="btn" data-act="impRun">取り込む</button>`);
+}
+let pendingImport = null;
+function runImport(){
+  if(!pendingImport) return;
+  const g = {id:uid(), date:impDate, opponent:impLabel || "過去データ取込", venue:"", imported:true};
+  S.games.push(g);
+  const bag = impSide==="bat" ? S.bat : S.pit;
+  bag[g.id] = {};
+  pendingImport.forEach(p=>{
+    let pl = S.players.find(x=>x.name===p.name);
+    if(!pl){
+      pl = {id:uid(), grade:"", name:p.name, bats:impSide==="bat", pitches:impSide==="pit", active:true};
+      S.players.push(pl);
+    }else{
+      if(impSide==="bat") pl.bats = true; else pl.pitches = true;
+    }
+    const rec = impSide==="bat" ? emptyBat() : emptyPit();
+    Object.keys(rec).forEach(k=>{ if(p[k]!=null) rec[k] = p[k]; });
+    bag[g.id][pl.id] = rec;
+  });
+  pendingImport = null; persist(); closeSheet(); ui.tab="stats"; render();
+  toast("取り込みました");
+}
+function exportCsv(side){
+  const games = periodGames();
+  const ids = S.players.filter(p=> side==="bat" ? p.bats : p.pitches).map(p=>p.id);
+  let head, lines = [];
+  if(side==="bat"){
+    head = ["選手","学年","OPS","打率","打席","打数","安打数","単打","二塁打","三塁打","本塁打","塁打","打点","得点","三振","四球","死球","犠打","犠飛","盗塁","盗塁死","盗塁成功率","出塁率","長打率","BB/K","ISO"];
+    ids.forEach(id=>{
+      const rs = rowsFor("bat", id, games); if(!rs.length) return;
+      const t = sumBat(rs), d = batDerive(t);
+      lines.push([playerName(id), (playerOf(id)||{}).grade||"", n3(d.ops), n3(d.avg), d.pa, t.ab, t.h, d.single, t.d2, t.d3, t.hr, d.tb, t.rbi, t.r, t.so, t.bb, t.hbp, t.sh, t.sf, t.sb, t.cs, n3(d.sbp), n3(d.obp), n3(d.slg), n2(d.bbk), n3(d.iso)]);
+    });
+  }else{
+    head = ["選手","学年","K/BB","試合","防御率","投球回","打者","打数","投球数","安打","本塁打","四球","死球","三振","K%","暴投","失点","自責点","WHIP","最高球速","完全アウト","ゴロ","外野フライ・ライナー","四死球","本塁打(リスク)","計","完全アウト+ゴロ"];
+    ids.forEach(id=>{
+      const rs = rowsFor("pit", id, games); if(!rs.length) return;
+      const t = sumPit(rs), d = pitDerive(t);
+      const rk = riskDerive(t);
+      lines.push([playerName(id), (playerOf(id)||{}).grade||"", n2(d.kbb), t.g, n2(d.era), (t.outs/3).toFixed(2), t.bf, t.ab, t.np, t.h, t.hr, t.bb, t.hbp, t.so, d.kpct!=null?(d.kpct*100).toFixed(1)+"%":"", t.wp, t.r, t.er, n2(d.whip), t.velo||"",
+        t.rk_out, t.rk_gb, t.rk_fb, t.rk_bb, t.rk_hr, rk.total, rk.core!=null?(rk.core*100).toFixed(1)+"%":""]);
+    });
+  }
+  if(!lines.length){ toast("この期間に書き出す記録がありません"); return; }
+  const csv = [head].concat(lines).map(r=>r.map(c=>{
+    const s = String(c==null?"":c);
+    return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
+  }).join(",")).join("\n");
+  offer(csv, `${side==="bat"?"打者":"投手"}成績_${(ui.period==="custom"? (ui.from||"")+"_"+(ui.to||"") : ui.period)}.csv`, "text/csv");
+}
+const n3 = v => (v==null||!isFinite(v)) ? "" : v.toFixed(3);
+const n2 = v => (v==null||!isFinite(v)) ? "" : v.toFixed(2);
+function offer(content, filename, mime){
+  const blob = new Blob(["\uFEFF"+content], {type:mime+";charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const box = document.getElementById("outBox");
+  box.innerHTML = `<div style="margin-top:12px;border-top:1px solid var(--line);padding-top:12px">
+    <div class="small" style="margin-bottom:8px">${esc(filename)}</div>
+    <a class="btn block" href="${url}" download="${esc(filename)}">ダウンロード</a>
+    <details style="margin-top:10px"><summary class="small muted" style="cursor:pointer">中身を表示（コピーしてLINEなどに貼れます）</summary>
+    <textarea readonly style="margin-top:8px">${esc(content)}</textarea></details></div>`;
+}
+
+/* ============================================================
+   シート制御
+   ============================================================ */
+const sheet = document.getElementById("sheet"), backdrop = document.getElementById("backdrop");
+function openSheet(title, body, foot, keepScroll){
+  const sb = document.getElementById("sheetBody");
+  const y = keepScroll ? sb.scrollTop : 0;
+  document.getElementById("sheetTitle").textContent = title;
+  sb.innerHTML = body;
+  if(keepScroll) sb.scrollTop = y;
+  document.getElementById("sheetFoot").innerHTML = foot || "";
+  document.getElementById("sheetFoot").style.display = foot ? "flex" : "none";
+  sheet.classList.add("open"); backdrop.classList.add("open");
+}
+function closeSheet(){ sheet.classList.remove("open"); backdrop.classList.remove("open"); sheetState = null; }
+document.getElementById("sheetClose").onclick = closeSheet;
+backdrop.onclick = closeSheet;
+
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+/* ============================================================
+   イベント
+   ============================================================ */
+document.addEventListener("click", e=>{
+  const nav = e.target.closest("nav button");
+  if(nav){ ui.tab = nav.dataset.tab; ui.gameId = null; render(); return; }
+
+  const step = e.target.closest("[data-step]");
+  if(step && sheetState){
+    const k = step.dataset.k, delta = +step.dataset.step;
+    if(k === "__ip"){
+      const whole = Math.max(0, Math.floor(sheetState.v.outs/3) + delta);
+      sheetState.v.outs = whole*3 + sheetState.v.outs%3;
+    }else{
+      sheetState.v[k] = Math.max(0, (+sheetState.v[k]||0) + delta);
+    }
+    sheetState.type === "bat" ? drawBatSheet() : drawPitSheet();
+    return;
+  }
+
+  const b = e.target.closest("[data-act]");
+  if(!b) return;
+  const act = b.dataset.act, id = b.dataset.id, v = b.dataset.v;
+  try{ handleAction(act, id, v, b); }
+  catch(err){ showError(act + " → " + (err && err.message || err)); }
+});
+function handleAction(act, id, v, b){
+  const WRITES = ["newGame","editGame","createGame","updateGame","delGame","editBat","editPit","saveEntry","delEntry",
+                  "newPlayer","editPlayer","savePlayer","delPlayer","impPreview","impRun","wipe","riskFill"];
+  if(WRITES.indexOf(act) >= 0 && !canEdit()){ toast("閲覧モードです。更新はデータ班の端末から行われます"); return; }
+
+  switch(act){
+    case "set": ui[b.dataset.g] = v; render(); break;
+    case "sort": ui.sort = v; render(true); break;
+    case "toggleTable": ui.table = !ui.table; render(); break;
+    case "setGview": ui.gview = v; render(); break;
+    case "calMove": {
+      const gs = S.games.filter(g=> ui.team==="all" || (g.team||"")===ui.team);
+      const months = Array.from(new Set(gs.map(g=>g.date.slice(0,7)))).sort();
+      const i = months.indexOf(ui.calMonth) + (+v);
+      if(i >= 0 && i < months.length){ ui.calMonth = months[i]; render(); }
+      break;
+    }
+    case "setBadge": {
+      if(ui.badge === v) break;
+      ui.badge = v; const y = window.scrollY; render(true); window.scrollTo(0, y); break;
+    }
+    case "pmode": ui.pmode = v; render(); break;
+    case "riskFill": {
+      sheetState.v.rk_bb = (+sheetState.v.bb||0) + (+sheetState.v.hbp||0);
+      sheetState.v.rk_hr = (+sheetState.v.hr||0);
+      drawPitSheet(); break;
+    }
+    case "player": {
+      ui.statsScroll = window.scrollY; ui.playerFrom = "stats";
+      ui.playerId = id; ui.pside = ui.side; ui.tab = "player"; render(); break;
+    }
+    case "backStats": {
+      ui.playerId = null; ui.tab = "stats"; render(true);
+      window.scrollTo(0, ui.statsScroll || 0); break;
+    }
+    case "pickPlayer": ui.playerFrom = "picker"; ui.playerId = id; ui.tab = "player"; render(); break;
+    case "backPicker": ui.playerId = null; render(); break;
+    case "pside": ui.pside = v; render(); break;
+    case "gteam": ui.gteam = v; b.parentNode.querySelectorAll("button").forEach(x=>x.classList.toggle("on", x===b)); break;
+
+    case "newGame": gameForm(null); break;
+    case "openGame": ui.gameId = id; render(); break;
+    case "backGames": ui.gameId = null; render(); break;
+    case "editGame": gameForm(S.games.find(g=>g.id===ui.gameId)); break;
+    case "createGame": {
+      const g = {id:uid(), date:val("gDate"), opponent:val("gOpp"), venue:val("gVen"), team:ui.gteam,
+                 rs: val("gRs")==="" ? "" : +val("gRs"), ra: val("gRa")==="" ? "" : +val("gRa")};
+      if(!g.date){ toast("日付を入れてください"); break; }
+      S.games.push(g); persist(); closeSheet(); ui.gameId = g.id; render(); break;
+    }
+    case "updateGame": {
+      const g = S.games.find(x=>x.id===ui.gameId);
+      g.date = val("gDate"); g.opponent = val("gOpp"); g.venue = val("gVen"); g.team = ui.gteam;
+      g.rs = val("gRs")==="" ? "" : +val("gRs"); g.ra = val("gRa")==="" ? "" : +val("gRa");
+      persist(); closeSheet(); render(); toast("保存しました"); break;
+    }
+    case "delGame": {
+      if(!confirm("この試合と、入力済みの成績をまとめて削除します。よろしいですか？")) break;
+      S.games = S.games.filter(g=>g.id!==ui.gameId);
+      delete S.bat[ui.gameId]; delete S.pit[ui.gameId];
+      ui.gameId = null; persist(); render(); toast("削除しました"); break;
+    }
+    case "editBat": openBatSheet(ui.gameId, id); break;
+    case "editPit": openPitSheet(ui.gameId, id); break;
+    case "outs": {
+      sheetState.v.outs = Math.floor(sheetState.v.outs/3)*3 + (+v);
+      drawPitSheet(); break;
+    }
+    case "saveEntry": saveEntry(); break;
+    case "delEntry": delEntry(); break;
+
+    case "newPlayer": playerForm(null); break;
+    case "editPlayer": playerForm(S.players.find(p=>p.id===id)); break;
+    case "pgrade": {
+      formState.grade = v;
+      b.parentNode.querySelectorAll("button").forEach(x=>x.classList.toggle("on", x===b));
+      break;
+    }
+    case "tog": {
+      const k = b.dataset.k; formState[k] = !formState[k]; b.classList.toggle("on", formState[k]);
+      if(!formState.bats && !formState.pitches){ formState[k] = true; b.classList.add("on"); toast("打者・投手のどちらかは必要です"); }
+      break;
+    }
+    case "savePlayer": {
+      const name = val("pName").trim();
+      if(!name){ toast("名前を入れてください"); break; }
+      const data = {grade:formState.grade, name, bats:formState.bats, pitches:formState.pitches, active:formState.active};
+      if(editingPlayer) Object.assign(editingPlayer, data);
+      else S.players.push(Object.assign({id:uid()}, data));
+      persist(); closeSheet(); render(); toast("保存しました"); break;
+    }
+    case "delPlayer": {
+      const used = S.games.some(g => (S.bat[g.id]||{})[editingPlayer.id] || (S.pit[g.id]||{})[editingPlayer.id]);
+      if(used && !confirm("この選手の成績も一緒に消えます。残す場合は「入力画面に表示する」をオフにしてください。削除しますか？")) break;
+      S.players = S.players.filter(p=>p.id!==editingPlayer.id);
+      Object.values(S.bat).forEach(o=>delete o[editingPlayer.id]);
+      Object.values(S.pit).forEach(o=>delete o[editingPlayer.id]);
+      persist(); closeSheet(); render(); toast("削除しました"); break;
+    }
+
+    case "goImport": case "goEdit": ui.tab = "edit"; render(); break;
+
+    case "impSide": impSide = v; renderEdit(); break;
+    case "impPreview": importPreview(); break;
+    case "impRun": runImport(); break;
+    case "closeSheet": closeSheet(); break;
+    case "connSave": {
+      const was = {owner:conn.owner, repo:conn.repo, path:conn.path, pass:conn.pass};
+      conn.owner = valOr("cOwner", conn.owner); conn.repo = valOr("cRepo", conn.repo);
+      conn.branch = valOr("cBranch", conn.branch) || "main"; conn.path = valOr("cPath", conn.path) || "data.json";
+      conn.pass = valOr("cPass", conn.pass);
+      saveConn(); setSync(canSync()? "dirty" : "off");
+      const moved = was.owner !== conn.owner || was.repo !== conn.repo || was.path !== conn.path;
+      const passChanged = was.pass !== conn.pass;
+      (async ()=>{
+        if(conn.token && (moved || passChanged)){
+          try{ await push(true); }catch(e){ render(); return; }
+          toast("保存しました");
+        }else if(canSync()){
+          await pull({force:true});
+          toast("保存しました");
+        }
+        render();
+      })();
+      break;
+    }
+    case "editUnlock": {
+      const pw = val("editKey").trim();
+      if(!pw){ toast("パスキーを入れてください"); break; }
+      (async ()=>{
+        try{ await pull({silent:true, force:!hasUnsent()}); }catch(e){}
+        if(!hasAuth()){ editMsg = "この共有ファイルにはまだ鍵が登録されていません。"; render(); return; }
+        try{
+          conn.token = await decBox(S.auth.keyBox, pw);
+          editMsg = ""; render(); toast("編集モードになりました");
+        }catch(e){ editMsg = "パスキーが違います。"; render(); }
+      })();
+      break;
+    }
+    case "authSetup": {
+      const tk = val("auToken").trim(), nk = val("auKey").trim(), rc = val("auRec").trim();
+      (async ()=>{
+        try{
+          const first = !hasAuth();
+          if(first && (!tk || !nk || !rc)){ editMsg = "トークン・パスキー・復旧用パスワードをすべて入力してください。"; render(); return; }
+          const token = tk || conn.token;
+          if(!token){ editMsg = "編集用トークンが必要です。"; render(); return; }
+          const prev = S.auth;
+          const auth = Object.assign({}, S.auth);
+          if(nk || tk || first) auth.keyBox = await encBox(token, nk || null);
+          if(rc || tk || first) auth.recBox = await encBox(token, rc || null);
+          if((!nk && !first) || (!rc && !first)){
+            /* 片方だけ変えるときは、変えない側は今のトークンで作り直せないので入力を求める */
+            if(!nk && (tk)){ editMsg = "トークンを変えるときは、パスキーも入力してください。"; render(); return; }
+            if(!rc && (tk)){ editMsg = "トークンを変えるときは、復旧用パスワードも入力してください。"; render(); return; }
+          }
+          if(!nk && !rc && !tk){ editMsg = "変更する項目を入力してください。"; render(); return; }
+          if(nk) auth.keyBox = await encBox(token, nk);
+          if(rc) auth.recBox = await encBox(token, rc);
+          S.auth = auth; conn.token = token; legacyToken = "";
+          try{ await push(true); }
+          catch(e){ S.auth = prev; render(); return; }
+          editMsg = ""; render(); toast("鍵を更新しました");
+        }catch(e){ showError("鍵の設定：" + (e.message||e)); render(); }
+      })();
+      break;
+    }
+    case "authRecover": {
+      const rc = val("rcPass").trim(), nk = val("rcNew").trim(), nt = val("rcToken").trim();
+      if(!rc || !nk){ editMsg = "復旧用パスワードと新しいパスキーを入れてください。"; render(); break; }
+      (async ()=>{
+        try{ await pull({silent:true, force:true}); }catch(e){}
+        if(!S.auth || !S.auth.recBox){ editMsg = "復旧用パスワードが登録されていません。"; render(); return; }
+        let token;
+        try{ token = await decBox(S.auth.recBox, rc); }
+        catch(e){ editMsg = "復旧用パスワードが違います。"; render(); return; }
+        if(nt) token = nt;
+        const prev = S.auth;
+        S.auth = {keyBox: await encBox(token, nk), recBox: await encBox(token, rc)};
+        conn.token = token;
+        try{ await push(true); }
+        catch(e){ S.auth = prev; conn.token = ""; render(); return; }
+        editMsg = ""; render(); toast("編集モードに戻りました");
+      })();
+      break;
+    }
+    case "unlock": {
+      const pw = val("lockPass");
+      if(!pw){ toast("合言葉を入れてください"); break; }
+      conn.pass = pw; lockMsg = "";
+      (async ()=>{
+        /* サーバーと手元の控えを両方ひらいて、新しいほうを採用する */
+        let best = null;
+        for(const raw of [lastRaw, cachedRaw]){
+          if(!raw) continue;
+          try{
+            const d = normalize(await decodePayload(raw));
+            if(!best || (d.updatedAt||0) > (best.updatedAt||0)) best = d;
+          }catch(e){ /* 合言葉が違う／開けない */ }
+        }
+        if(!best){ render(); return; }
+        S = best; locked = false; lockMsg = ""; sync.base = S.updatedAt || 0;
+        render();
+        await pull({silent:true, force: !hasUnsent()});   /* 通信できれば最新に更新 */
+        render();
+      })();
+      break;
+    }
+    case "peek": {
+      const el = document.getElementById(v);
+      if(!el) break;
+      const show = el.type === "password";
+      el.type = show ? "text" : "password";
+      b.textContent = show ? "隠す" : "表示";
+      b.classList.toggle("on", show);
+      break;
+    }
+    case "connTest": {
+      (async ()=>{
+        const box = document.getElementById("connResult");
+        const put = html => { if(box) box.innerHTML = html; };
+        put(`<div class="small muted" style="margin-top:10px">確認しています…</div>`);
+        try{
+          const h2 = {Accept:"application/vnd.github+json"};
+          if(conn.token) h2.Authorization = "Bearer " + conn.token;
+          const r = await fetch(`https://api.github.com/repos/${conn.owner}/${conn.repo}?t=${Date.now()}`, {headers:h2, cache:"no-store"});
+          if(!r.ok){
+            put(`<div class="err" style="margin-top:10px">リポジトリを確認できません (${r.status})。ユーザー名・リポジトリ名か、トークンを見直してください。</div>`);
+            return;
+          }
+          const j = await r.json();
+          const write = !!(j.permissions && j.permissions.push);
+          put(`<div class="${write?"":"err"}" style="margin-top:10px;${write?"background:var(--good-soft);color:var(--good);border-radius:10px;padding:10px 12px;font-size:12.5px":""}">
+            接続先: ${esc(j.full_name)}<br>
+            読み取り: OK<br>
+            書き込み: ${write ? "OK（このまま使えます）"
+              : "できません。GitHubでトークンの Repository access にこのリポジトリを追加するか、新しく発行し直してください。"}
+          </div>`);
+        }catch(e){
+          put(`<div class="err" style="margin-top:10px">確認できませんでした：${esc(e.message||String(e))}</div>`);
+        }
+      })();
+      break;
+    }
+    case "pullNow": pull({toast:true, force:true}); break;
+    case "pushNow": push(); break;
+    case "expCsv": exportCsv(v); break;
+    case "expJson": offer(JSON.stringify(S,null,1), "scorebook_backup_"+new Date().toISOString().slice(0,10)+".json", "application/json"); break;
+    case "wipe": {
+      if(!confirm("選手・試合・成績をすべて消去します。元に戻せません。よろしいですか？")) break;
+      S = {players:[], games:[], bat:{}, pit:{}}; persist(); render(); toast("消去しました"); break;
+    }
+  }
+}
+const SEARCH_BOXES = {qb:"details", qp:"details", qedit:"#editList", qsel:"#pickList"};
+function runSearch(input){
+  const scope = SEARCH_BOXES[input.id];
+  const box = scope === "details" ? input.closest("details") : document.querySelector(scope);
+  if(!box) return;
+  const q = input.value.toLowerCase().replace(/[\s　]/g,"");
+  let hit = 0;
+  box.querySelectorAll("[data-name]").forEach(el=>{
+    const on = !q || el.dataset.name.indexOf(q) >= 0;
+    el.style.display = on ? "" : "none";
+    if(on) hit++;
+  });
+  const none = box.querySelector("[data-none]");
+  if(none) none.style.display = hit ? "none" : "";
+}
+document.addEventListener("input", e=>{
+  const t = e.target;
+  if(t.id && SEARCH_BOXES[t.id]){ runSearch(t); return; }
+  if(t.dataset && t.dataset.k && sheetState){
+    const k = t.dataset.k, n = Math.max(0, Math.round(+t.value||0));
+    if(k === "__ip") sheetState.v.outs = n*3 + sheetState.v.outs%3;
+    else sheetState.v[k] = n;
+  }
+});
+document.addEventListener("change", e=>{
+  const t = e.target;
+  if(t.id === "fromD"){ ui.from = t.value; renderStats(); return; }
+  if(t.id === "toD"){ ui.to = t.value; renderStats(); return; }
+  if(t.dataset && t.dataset.k && sheetState){
+    sheetState.type === "bat" ? drawBatSheet() : drawPitSheet();
+  }
+});
+function val(id){ const el = document.getElementById(id); return el ? el.value : ""; }
+function valOr(id, cur){ const el = document.getElementById(id); return el ? el.value.trim() : cur; }
+
+/* ============================================================
+   起動
+   ============================================================ */
+document.getElementById("syncBtn").addEventListener("click", async ()=>{
+  if(!canSync()){ ui.tab = "edit"; render(); return; }
+  await pull({force:true});
+  render();
+  toast(`最新: ${S.updatedAt ? new Date(S.updatedAt).toLocaleString("ja-JP") : "不明"}${lastSrc?"（"+lastSrc+"）":""}`);
+  checkAppVersion();
+});
+window.addEventListener("online", ()=>{
+  if(conn.token && sync.state !== "ok") push();
+});
+document.addEventListener("visibilitychange", async ()=>{
+  if(document.hidden || !canSync() || locked) return;
+  if(hasUnsent()) return;                       /* 未送信があるときは上書きしない */
+  const before = S.updatedAt || 0;
+  await pull({silent:true, force:true});
+  if((S.updatedAt||0) !== before){ render(); toast("最新に更新しました"); }
+});
+
+(async function(){
+  checkAppVersion();
+  const cached = await store.load();
+  loadConn();
+  if(!canSync()){
+    S = normalize(cached || {});
+    sync.base = S.updatedAt || 0;
+    setSync("off"); render(); return;
+  }
+  setSync("sync");
+  if(cached){
+    lastRaw = cached; cachedRaw = cached;
+    try{
+      S = normalize(await decodePayload(cached));   /* 圏外でもここまでは動く */
+      sync.base = S.updatedAt || 0; locked = false;
+    }catch(e){ /* 合言葉待ち */ }
+    render();
+  }else{
+    view.innerHTML = `<div class="card"><div class="empty">読み込んでいます…</div></div>`;
+  }
+  await pull({force: !hasUnsent()});
+  if(!locked) render();
+  if(!lastRaw && !S.games.length){
+    view.innerHTML = `<div class="card"><div class="empty"><strong>読み込めませんでした</strong>
+      通信できる場所で一度開くと、以降は圏外でも直前の内容を見られるようになります。</div></div>`;
+  }
+})();
+</script>
+</body>
+</html>
